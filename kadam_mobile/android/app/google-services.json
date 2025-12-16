@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1052250440349",
+    "project_id": "kadam-dev-5a2a4",
+    "storage_bucket": "kadam-dev-5a2a4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1052250440349:android:3a96aa878654bcfaa28a74",
+        "android_client_info": {
+          "package_name": "com.example.kadam_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_RINwQ2JtvORzTMGf04_2atm3fGhsoJ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1052250440349:android:2ead4f2214bee53aa28a74",
+        "android_client_info": {
+          "package_name": "com.psyluck.kadam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_RINwQ2JtvORzTMGf04_2atm3fGhsoJ0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
