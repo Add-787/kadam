@@ -31,6 +31,9 @@ migrate_working_dir/
 .pub/
 /build/
 
+# Firebase configuration files (contains API keys)
+lib/firebase_options*.dart
+
 # Symbolication related
 app.*.symbols
 
