@@ -17,6 +17,7 @@ The repository is organized as follows:
 - **`kadam_mobile/`** - The Flutter application source code (all app development happens here)
 - **`docs/`** - Reference documentation and project files
   - **`docs/design.md`** - System-level design documentation for the app. This file is updated after every commit when there are changes to the high-level design.
+  - **`docs/progress.md`** - Task completion log documenting completed tasks and their completion dates.
 
 ### Flutter App Structure (`kadam_mobile/`)
 ```
