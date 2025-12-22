@@ -19,11 +19,11 @@ void main() async {
 
   // TEMPORARY: Show error until prod is configured
   runApp(
-    MaterialApp(
+    const MaterialApp(
       home: Scaffold(
         body: Center(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0),
             child: Text(
               'Production Firebase is not configured yet.\n\n'
               'Please run:\n'

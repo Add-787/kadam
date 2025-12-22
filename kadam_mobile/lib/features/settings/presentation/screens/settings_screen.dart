@@ -42,7 +42,7 @@ class SettingsScreen extends StatelessWidget {
                           labelText: 'Theme Mode',
                           prefixIcon: Icon(Icons.brightness_6),
                         ),
-                        value: settingsProvider.themeMode,
+                        initialValue: settingsProvider.themeMode,
                         onChanged: settingsProvider.updateThemeMode,
                         items: const [
                           DropdownMenuItem(

@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "com.psyluck.kadam"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "25.1.8937393"
+    ndkVersion = "27.1.12297006"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
@@ -27,7 +27,7 @@ android {
         applicationId = "com.psyluck.kadam"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23  // Updated to meet Firebase Auth requirement
+        minSdkVersion = flutter.minSdkVersion  // Updated to meet Firebase Auth requirement
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
