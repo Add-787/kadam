@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'core/constants/app_constants.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/settings/presentation/providers/settings_provider.dart';
 
 /// The main application widget
@@ -14,8 +15,12 @@ class App extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<SettingsProvider>(
-      builder: (context, settingsProvider, child) {
+    return Consumer2<SettingsProvider, AuthProvider>(
+      builder: (context, settingsProvider, authProvider, child) {
+        // Determine initial route based on auth status
+        String initialRoute =
+            authProvider.isAuthenticated ? AppRoutes.home : AppRoutes.login;
+
         return MaterialApp(
           // App configuration
           restorationScopeId: 'app',
@@ -41,7 +46,7 @@ class App extends StatelessWidget {
 
           // Routing
           onGenerateRoute: AppRoutes.onGenerateRoute,
-          initialRoute: AppRoutes.home,
+          initialRoute: initialRoute,
         );
       },
     );
