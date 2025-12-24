@@ -11,6 +11,7 @@ class AppConstants {
   // Routes
   static const String homeRoute = '/';
   static const String settingsRoute = '/settings';
+  static const String leaderboardRoute = '/leaderboard';
 
   // Timeouts
   static const Duration defaultTimeout = Duration(seconds: 30);
