@@ -32,7 +32,7 @@ migrate_working_dir/
 /build/
 
 # Firebase configuration files (contains API keys)
-lib/firebase_options*.dart
+lib/core/firebase_options*.dart
 
 # Symbolication related
 app.*.symbols
