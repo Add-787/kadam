@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
-import '../../features/home/home_screen.dart';
+import '../../features/home/main_scaffold.dart';
 import '../../features/settings/presentation/screens/settings_screen.dart';
 
 /// Application routes configuration
@@ -13,7 +13,6 @@ class AppRoutes {
   static const String home = '/';
   static const String login = '/login';
   static const String signup = '/signup';
-  static const String settings = '/settings';
 
   // Route generator
   static Route<dynamic>? onGenerateRoute(RouteSettings settings) {
@@ -21,7 +20,7 @@ class AppRoutes {
       case home:
         return MaterialPageRoute(
           settings: settings,
-          builder: (_) => const HomeScreen(),
+          builder: (_) => const MainScaffold(),
         );
 
       case login:
@@ -34,12 +33,6 @@ class AppRoutes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const SignUpScreen(),
-        );
-
-      case AppRoutes.settings:
-        return MaterialPageRoute(
-          settings: settings,
-          builder: (_) => const SettingsScreen(),
         );
 
       default:
