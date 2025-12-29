@@ -10,7 +10,7 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.light,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
+      seedColor: Colors.amber,
       brightness: Brightness.light,
     ),
     appBarTheme: const AppBarTheme(
@@ -36,7 +36,7 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.blue,
+      seedColor: Colors.orangeAccent,
       brightness: Brightness.dark,
     ),
     appBarTheme: const AppBarTheme(

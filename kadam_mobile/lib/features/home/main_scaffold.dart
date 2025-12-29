@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:kadam_mobile/features/health/presentation/screens/health_screen.dart';
 import 'package:kadam_mobile/features/leaderboard/presentation/leaderboard_screen.dart';
 import '../auth/presentation/providers/auth_provider.dart';
-import '../../shared/widgets/floating_bottom_bar.dart';
+import '../../shared/presentation/widgets/floating_bottom_bar.dart';
 
 /// Main scaffold with bottom navigation for the app
 ///

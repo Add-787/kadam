@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 
 /// Enum representing different health platforms
 enum HealthPlatform {
@@ -7,6 +8,7 @@ enum HealthPlatform {
   samsungHealth,
   healthConnect,
   fitbit,
+  mock,
   none,
 }
 
@@ -103,6 +105,8 @@ class PlatformCapability {
         return 'Health Connect';
       case HealthPlatform.fitbit:
         return 'Fitbit';
+      case HealthPlatform.mock:
+        return 'Mock Health';
       case HealthPlatform.none:
         return 'None';
     }
@@ -168,6 +172,8 @@ extension HealthPlatformExtension on HealthPlatform {
         return 'health_connect';
       case HealthPlatform.fitbit:
         return 'fitbit';
+      case HealthPlatform.mock:
+        return 'mock';
       case HealthPlatform.none:
         return 'none';
     }
@@ -186,6 +192,8 @@ extension HealthPlatformExtension on HealthPlatform {
         return 'Health Connect';
       case HealthPlatform.fitbit:
         return 'Fitbit';
+      case HealthPlatform.mock:
+        return 'Mock Health';
       case HealthPlatform.none:
         return 'None';
     }
@@ -201,6 +209,26 @@ extension HealthPlatformExtension on HealthPlatform {
   /// Check if platform requires OAuth
   bool get requiresOAuth {
     return this == HealthPlatform.fitbit;
+  }
+
+  /// Get icon for the platform
+  IconData get icon {
+    switch (this) {
+      case HealthPlatform.appleHealth:
+        return Icons.favorite;
+      case HealthPlatform.googleFit:
+        return Icons.fitness_center;
+      case HealthPlatform.samsungHealth:
+        return Icons.favorite_border;
+      case HealthPlatform.healthConnect:
+        return Icons.health_and_safety;
+      case HealthPlatform.fitbit:
+        return Icons.watch;
+      case HealthPlatform.mock:
+        return Icons.bug_report;
+      case HealthPlatform.none:
+        return Icons.not_interested;
+    }
   }
 }
 
