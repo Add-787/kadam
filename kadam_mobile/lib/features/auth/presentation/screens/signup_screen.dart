@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/utils/navigation_helper.dart';
 
 /// Sign up screen
 class SignUpScreen extends StatefulWidget {
@@ -45,7 +46,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
 
       if (mounted && authProvider.isAuthenticated) {
-        Navigator.of(context).pushReplacementNamed('/');
+        // Check if health permissions are granted
+        await _navigateAfterSignup();
       }
     } catch (e) {
       if (mounted) {
@@ -230,5 +232,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         ),
       ),
     );
+  }
+
+  /// Navigate after successful signup - new users always go to onboarding
+  Future<void> _navigateAfterSignup() async {
+    if (!mounted) return;
+
+    // Use NavigationHelper for new user navigation
+    await NavigationHelper.navigateAfterAuth(context, isNewUser: true);
   }
 }

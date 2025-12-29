@@ -4,23 +4,20 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
         {
             "name": "kadam_mobile",
-            "cwd": "kadam_mobile",
             "request": "launch",
+            "program": "lib/main.dart",
             "type": "dart"
         },
         {
             "name": "kadam_mobile (profile mode)",
-            "cwd": "kadam_mobile",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
             "name": "kadam_mobile (release mode)",
-            "cwd": "kadam_mobile",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"

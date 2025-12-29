@@ -2,19 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/health_platform_provider.dart';
 import '../../../../core/platform/models/platform_capability.dart';
+import '../../../../core/routes/guards/onboarding_guard.dart';
+import '../../../../core/routes/app_routes.dart';
 
 /// Onboarding screen for health platform permissions
 ///
 /// Automatically detects the available platform and requests permissions
 /// No manual platform selection - system chooses based on device
-class HealthOnboardingScreen extends StatefulWidget {
-  const HealthOnboardingScreen({super.key});
+class OnboardingScreen extends StatefulWidget {
+  const OnboardingScreen({super.key});
 
   @override
-  State<HealthOnboardingScreen> createState() => _HealthOnboardingScreenState();
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _HealthOnboardingScreenState extends State<HealthOnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void initState() {
     super.initState();
@@ -454,11 +456,17 @@ class _HealthOnboardingScreenState extends State<HealthOnboardingScreen> {
 
   void _skipForNow() {
     // User chose to skip - go to home with limited functionality
-    Navigator.of(context).pushReplacementNamed('/home');
+    // Don't mark as complete since permissions weren't granted
+    debugPrint('⚠️ [Onboarding] User skipped health permissions');
+    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
   }
 
-  void _completeOnboarding() {
-    // All set - go to home
-    Navigator.of(context).pushReplacementNamed('/home');
+  Future<void> _completeOnboarding() async {
+    // All set - mark onboarding as complete and go to home
+    debugPrint('✅ [Onboarding] Health permissions granted - marking complete');
+    await OnboardingGuard.markHealthOnboardingComplete();
+
+    if (!mounted) return;
+    Navigator.of(context).pushReplacementNamed(AppRoutes.home);
   }
 }

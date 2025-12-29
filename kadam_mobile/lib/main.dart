@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'config/firebase_options_dev.dart';
-import 'app.dart';
+import 'shared/presentation/app.dart';
 import 'core/di/injection.dart';
 import 'features/auth/presentation/providers/auth_provider.dart' as auth;
 import 'features/settings/data/datasources/settings_local_datasource.dart';

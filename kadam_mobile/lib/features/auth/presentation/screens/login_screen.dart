@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/utils/navigation_helper.dart';
 import 'signup_screen.dart';
 
 /// Login screen
@@ -38,7 +39,8 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (mounted && authProvider.isAuthenticated) {
-        Navigator.of(context).pushReplacementNamed('/');
+        // Check if health permissions are granted
+        await _navigateAfterLogin();
       }
     } catch (e) {
       if (mounted) {
@@ -181,5 +183,13 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  /// Navigate after successful login based on health permissions status
+  Future<void> _navigateAfterLogin() async {
+    if (!mounted) return;
+
+    // Use NavigationHelper to determine route based on onboarding status
+    await NavigationHelper.navigateAfterAuth(context, isNewUser: false);
   }
 }
