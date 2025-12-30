@@ -22,8 +22,8 @@ void main() async {
   // Set environment to PRODUCTION
   EnvironmentConfig.setEnvironment(Environment.production);
 
-  // Setup dependency injection
-  setupDependencyInjection();
+  // Setup dependency injection (async for health channel)
+  await setupDependencyInjection();
 
   // Initialize Firebase with PRODUCTION configuration
   await Firebase.initializeApp(

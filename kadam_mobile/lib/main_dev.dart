@@ -22,8 +22,8 @@ void main() async {
   // Set environment to DEVELOPMENT
   EnvironmentConfig.setEnvironment(Environment.development);
 
-  // Setup dependency injection
-  setupDependencyInjection();
+  // Setup dependency injection (async for health channel)
+  await setupDependencyInjection();
 
   // Initialize Firebase with DEV configuration
   await Firebase.initializeApp(

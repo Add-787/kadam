@@ -18,8 +18,8 @@ void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Setup dependency injection for health platform and auth
-  setupDependencyInjection();
+  // Setup dependency injection for health platform and auth (async for health channel)
+  await setupDependencyInjection();
 
   // Initialize Firebase with DEV configuration (default)
   await Firebase.initializeApp(

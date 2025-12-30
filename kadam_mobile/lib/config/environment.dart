@@ -34,9 +34,6 @@ class EnvironmentConfig {
   /// Enable debug logging
   static bool get enableDebugLogging => isDevelopment;
 
-  /// Enable mock health data
-  static bool get enableMockHealthData => isDevelopment;
-
   /// App name with environment suffix
   static String get appName {
     switch (_environment) {

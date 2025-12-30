@@ -4,6 +4,7 @@ import 'package:kadam_mobile/features/health/presentation/screens/health_screen.
 import 'package:kadam_mobile/features/leaderboard/presentation/leaderboard_screen.dart';
 import '../auth/presentation/providers/auth_provider.dart';
 import '../../shared/presentation/widgets/floating_bottom_bar.dart';
+import '../../shared/presentation/widgets/custom_app_bar.dart';
 
 /// Main scaffold with bottom navigation for the app
 ///
@@ -54,6 +55,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     }
 
     return Scaffold(
+      appBar: const CustomAppBar(),
       body: Stack(
         children: [
           // Display the current screen

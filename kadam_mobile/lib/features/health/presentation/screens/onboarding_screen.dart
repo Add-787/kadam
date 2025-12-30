@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/health_platform_provider.dart';
+import '../widgets/platform_info_card.dart';
 import '../../../../core/platform/models/platform_capability.dart';
 import '../../../../core/routes/guards/onboarding_guard.dart';
 import '../../../../core/routes/app_routes.dart';
@@ -176,35 +177,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 32),
+          const SizedBox(height: 16),
 
-          // Platform icon
-          Center(
-            child: Icon(
-              provider.platform!.icon,
-              size: 80,
-              color: Theme.of(context).primaryColor,
-            ),
+          // Platform Info Card
+          PlatformInfoCard(
+            capability: provider.capability,
+            showDebugInfo: false,
           ),
           const SizedBox(height: 24),
-
-          // Platform name
-          Text(
-            provider.platformName,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 8),
-
-          // Version
-          Text(
-            'Version ${provider.version}',
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey,
-                ),
-          ),
-          const SizedBox(height: 32),
 
           // Intro text
           Text(
@@ -243,32 +223,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   _buildDataTypeItem(Icons.favorite, 'Heart Rate'),
                 ],
               ),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          // Privacy note
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.blue.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.lock, color: Colors.blue.shade700),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Your health data stays private and secure on your device',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.blue.shade900,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ),
           const SizedBox(height: 32),
@@ -464,7 +418,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _completeOnboarding() async {
     // All set - mark onboarding as complete and go to home
     debugPrint('✅ [Onboarding] Health permissions granted - marking complete');
-    await OnboardingGuard.markHealthOnboardingComplete();
+    await OnboardingGuard.markAllOnboardingComplete();
 
     if (!mounted) return;
     Navigator.of(context).pushReplacementNamed(AppRoutes.home);

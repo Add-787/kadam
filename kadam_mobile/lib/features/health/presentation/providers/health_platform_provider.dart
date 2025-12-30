@@ -53,9 +53,10 @@ class HealthPlatformProvider extends ChangeNotifier {
     return '❓';
   }
 
-  /// Initialize - automatically detects platform
-  Future<void> initialize({bool useMock = false}) async {
-    if (isInitialized && !useMock) {
+  /// Initialize the health platform service
+  /// Platform (mock/real) is already injected via DI
+  Future<void> initialize() async {
+    if (isInitialized) {
       debugPrint('✅ [Provider] Already initialized');
       return;
     }
@@ -65,7 +66,7 @@ class HealthPlatformProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _platformService.initialize(useMock: useMock);
+      await _platformService.initialize();
 
       debugPrint('✅ [Provider] Initialized with $platformName');
       debugPrint('   Available: $isAvailable');

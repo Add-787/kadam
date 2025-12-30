@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
+import '../../features/auth/presentation/screens/signout_screen.dart';
 import '../../features/home/main_scaffold.dart';
 import '../../features/health/presentation/screens/onboarding_screen.dart';
 
@@ -13,6 +14,7 @@ class AppRoutes {
   static const String home = '/';
   static const String login = '/login';
   static const String signup = '/signup';
+  static const String signout = '/signout';
   static const String onboarding = '/onboarding';
 
   // Route generator
@@ -34,6 +36,12 @@ class AppRoutes {
         return MaterialPageRoute(
           settings: settings,
           builder: (_) => const SignUpScreen(),
+        );
+
+      case signout:
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (_) => const SignOutScreen(),
         );
 
       case onboarding:

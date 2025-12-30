@@ -1,6 +1,10 @@
 import 'package:get_it/get_it.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../platform/services/health_platform_service.dart';
+import '../platform/channels/health_channel.dart';
+import '../platform/channels/mock_health_channel.dart';
+import '../platform/factories/health_channel_factory.dart';
+import '../../config/environment.dart';
 import '../../features/health/presentation/providers/health_platform_provider.dart';
 import '../../features/auth/data/datasources/auth_remote_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
@@ -14,7 +18,7 @@ import '../../features/auth/presentation/providers/auth_provider.dart' as auth;
 final getIt = GetIt.instance;
 
 /// Setup dependency injection
-void setupDependencyInjection() {
+Future<void> setupDependencyInjection() async {
   // Firebase Auth instance (external dependency)
   getIt.registerLazySingleton<FirebaseAuth>(
     () => FirebaseAuth.instance,
@@ -57,9 +61,22 @@ void setupDependencyInjection() {
     ),
   );
 
-  // Health Platform Service
+  // Health Channel - inject based on environment
+  getIt.registerSingletonAsync<HealthChannel>(
+    () async {
+        // Use real platform channel (Health Connect/Apple Health)
+        final channel = await HealthChannelFactory.create();
+        if (channel == null) {
+          throw Exception('No health platform available on this device');
+        }
+        return channel;
+      }
+  );
+  await getIt.isReady<HealthChannel>();
+
+  // Health Platform Service - with injected channel
   getIt.registerLazySingleton<HealthPlatformService>(
-    () => HealthPlatformService(),
+    () => HealthPlatformService(getIt<HealthChannel>()),
   );
 
   // Health Platform Provider
