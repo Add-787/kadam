@@ -15,7 +15,9 @@ Kadam is a step tracking mobile application that enables users to track their st
 ### Frontend
 - **Framework**: Flutter (SDK ^3.5.1)
 - **Language**: Dart
-- **State Management**: Provider pattern with ChangeNotifier
+- **State Management**: BLoC (Business Logic Component) with flutter_bloc
+- **Navigation**: GoRouter (Declarative routing)
+- **DI**: GetIt & Injectable
 - **Localization**: flutter_localizations with ARB files
 - **Platforms**: iOS, Android, Web, Linux, macOS, Windows
 
@@ -39,32 +41,41 @@ lib/src/
 ├── sample_feature/             # Template feature module
 └── settings/                   # App settings feature
     ├── settings_view.dart      # UI layer
-    ├── settings_controller.dart # State management (ChangeNotifier)
-    └── settings_service.dart   # Business logic & data persistence
+    ├── settings_bloc.dart      # Business logic & state
+    ├── settings_event.dart     # Events
+    ├── settings_state.dart     # State definitions
+    └── settings_service.dart   # Data persistence
 ```
 
 ### State Management Pattern
-- **Provider**: Dependency injection and state management
-- **ChangeNotifier**: Controllers extend ChangeNotifier for reactive updates
-- **Services**: Handle data persistence and business logic
-- **Views**: UI widgets that consume state via Provider
+### State Management Pattern
+- **BLoC**: Handles business logic and state changes via Events and States
+- **GetIt/Injectable**: For dependency injection of repositories/services
+- **Services**: Handle raw data operations (Firestore, API)
+- **Views**: Send Events to BLoCs and rebuild on State changes (BlocBuilder)
 
 ### Data Flow
-1. **User Action** → View captures user input
-2. **View** → Controller processes the action
-3. **Controller** → Service handles business logic and Firebase operations
-4. **Service** → Firebase updates data
-5. **Firebase** → Real-time listeners notify controllers
-6. **Controller** → notifyListeners() triggers UI rebuild
-7. **View** → Displays updated state
+### Data Flow
+1. **User Action** → View adds an **Event** to the BLoC
+2. **BLoC** → Processes event, calls Service/Repository
+3. **Service** → Performs async work (Firebase, etc.)
+4. **BLoC** → Emits new **State** based on result
+5. **View** → UI rebuilds based on the new State
 
 ## Key Modules
 
 ### 1. Authentication Module
-- User registration and login via Firebase Auth
-- Social login options (Google, Apple, etc.)
-- Profile management
-- Session persistence
+- **Sign Up**:
+  - **Social Options**: Google, Apple (Recommended for lowest friction)
+  - **Manual Fields**: Full Name, Email, Password, Confirm Password
+- **Sign In**:
+  - **Social Options**: Google, Apple
+  - **Manual Fields**: Email, Password
+- **Features**:
+  - User registration and login via Firebase Auth
+  - Profile management
+  - Session persistence
+  - *Note: Onboarding (Height, Weight, Gender) is deferred to after sign-up.*
 
 ### 2. Step Tracking Module
 - Integration with device pedometer/health APIs
@@ -79,10 +90,10 @@ lib/src/
 - User profiles and avatars
 
 ### 4. Leaderboard Module
-- Real-time leaderboard updates using Firestore
-- Multiple leaderboard types (friends, groups, global)
-- Time-based rankings (daily, weekly, monthly, all-time)
-- Achievement badges and milestones
+### 4. Leaderboard Module
+- **Group Leaderboards**: Nested under Groups for easy access and permissions.
+- **Friends Leaderboard**: Dynamic client-side sorting of friend data.
+- **Time-based**: Weekly and Monthly resets.
 
 ### 5. Groups Module
 - Group creation and management
@@ -106,29 +117,42 @@ class User {
   String email;
   String? photoUrl;
   DateTime createdAt;
-  List<String> deviceIds;
+  DateTime createdAt;
+  List<String> connectedSources; // e.g. ["Apple Watch", "iPhone"]
   Map<String, dynamic> preferences;
 }
+
+### Friend
+```dart
+class Friend {
+  String uid; // The user ID of the friend (Foreign Key to User)
+  DateTime connectedAt;
+  String status; // e.g., 'pending', 'accepted'
+}
+```
 ```
 
-### StepRecord
+### DailyStepRecord
 ```dart
-class StepRecord {
-  String id;
+class DailyStepRecord {
+  String id; // format: "yyyy-MM-dd_deviceId"
   String userId;
+  String date; // yyyy-MM-dd
+  String deviceId; // The phone/tablet syncing the data
   int stepCount;
-  DateTime date;
-  String deviceId;
-  DateTime syncedAt;
+  int? caloriesBurned; 
+  double? distanceMeters;
+  int? flightsClimbed;
+  DateTime lastUpdated;
+  Map<String, int> hourlyBreakdown; // Optional: for graphs, simpler than raw intervals
 }
 ```
 
-### Leaderboard
+### Group Leaderboard
 ```dart
-class Leaderboard {
+class GroupLeaderboard {
   String id;
-  String type; // 'friends', 'group', 'global'
-  String? groupId;
+  String groupId; // Parent Group
   DateTime period; // start of period
   List<LeaderboardEntry> entries;
 }
@@ -158,37 +182,86 @@ users/
       {deviceId}/
         - device info
 
-stepRecords/
-  {recordId}/
-    - step data
-    - userId, deviceId, date, count
-
-leaderboards/
-  {leaderboardId}/
-    - type, period
-    entries/
-      {userId}/
-        - rank, stepCount
+dailySteps/
+  {date_deviceId}/
+    - stepCount
+    - caloriesBurned
+    - distanceMeters
+    - flightsClimbed
+    - lastUpdated
+    - hourlyBreakdown (map)
 
 groups/
   {groupId}/
+    - group data
+    leaderboards/
+      {leaderboardId}/
+        - period (week/month)
+        entries/
+          {userId}/
+            - rank, stepCount
     - group data
     members/
       {userId}/
         - role, joinedAt
 
 friends/
-  {userId}/
-    friends/
       {friendId}/
         - status, connectedAt
+
+### Entity Relationship Diagram
+```mermaid
+erDiagram
+    USERS ||--o{ DEVICES : "subcollection: devices"
+    USERS ||--o{ FRIENDS : "subcollection: friends"
+    USERS ||--o{ DAILY_STEP_RECORDS : "referenced by userId"
+    GROUPS ||--o{ GROUP_MEMBERS : "subcollection: members"
+    GROUPS ||--o{ GROUP_LEADERBOARDS : "subcollection: leaderboards"
+
+    USERS {
+        string id PK
+        string displayName
+        string email
+        string photoUrl
+        settings map
+    }
+
+    DEVICES {
+        string id PK
+        string fcmToken
+        string platform
+    }
+
+    DAILY_STEP_RECORDS {
+        string id PK
+        string userId FK
+        int stepCount
+        int caloriesBurned
+        float distanceMeters
+        int flightsClimbed
+        timestamp lastUpdated
+        map hourlyBreakdown
+    }
+
+    GROUPS {
+        string id PK
+        string name
+        string creatorId FK
+    }
+
+    GROUP_LEADERBOARDS {
+        string id PK
+        string groupId FK
+        timestamp period
+    }
+```
 ```
 
 ## Design Decisions
 
-### 1. Provider over BLoC
-- **Rationale**: Simpler learning curve, less boilerplate, sufficient for app complexity
-- **Implementation**: Controllers extend ChangeNotifier, views use Provider.of or context.watch
+### 1. BLoC Pattern
+- **Rationale**: Clear separation of concerns, excellent for event-driven flows (like step updates), and scalable for complex features.
+- **Implementation**: strict Unidirectional Data Flow. `flutter_bloc` for UI binding.
 
 ### 2. Feature-Based Structure
 - **Rationale**: Better scalability, clear boundaries, easier team collaboration
@@ -199,9 +272,15 @@ friends/
 - **Implementation**: Direct Firestore integration with local caching
 
 ### 4. Multi-Device Sync Strategy
-- **Approach**: Each device uploads steps independently with device ID
-- **Aggregation**: Cloud Functions aggregate steps per user per day
-- **Conflict Resolution**: Latest timestamp wins for same-day records
+- **Approach**: "Aggregated Source" model.
+- **Implementation**:
+    - Each primary device (Phone/Tablet) reads 'Total Steps' from its local Health Store (Apple Health/Google Fit).
+    - Health Store handles local de-duplication (e.g. Watch + Phone merge).
+    - We upload ONE document per day per primary device (e.g. `steps_2025-01-12_iphone`).
+    - **Device List**: We locally scan health data sources to update a `sourceDevices` list in the User profile for UI display.
+- **Conflict Resolution**:
+    - Server sums up the totals from different primary devices (e.g. iPhone + Pixel).
+    - Note: This accepts a small risk of double-counting if a user carries TWO phones simultaneously, but simpler than full raw conflict resolution.
 
 ### 5. Leaderboard Updates
 - **Strategy**: Scheduled Cloud Functions update leaderboards periodically
@@ -210,6 +289,7 @@ friends/
 
 ## Security Considerations
 - Firebase Security Rules for data access control
+- **Minimal Data Collection**: We rely on Health Store calculations and explicitly do NOT collect height, weight, or gender to protect user privacy.
 - User can only read/write their own data
 - Leaderboards are read-only for clients
 - Group members can only see group data
