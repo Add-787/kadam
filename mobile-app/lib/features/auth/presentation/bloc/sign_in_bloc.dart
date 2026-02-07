@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../domain/repositories/auth_repository.dart';
 import 'sign_in_event.dart';
 import 'sign_in_state.dart';
 
 @injectable
 class SignInBloc extends Bloc<SignInEvent, SignInState> {
-  SignInBloc() : super(const SignInState()) {
+  final AuthRepository _authRepository;
+
+  SignInBloc(this._authRepository) : super(const SignInState()) {
     on<SignInEmailChanged>(_onEmailChanged);
     on<SignInPasswordChanged>(_onPasswordChanged);
     on<SignInSubmitted>(_onSubmitted);
@@ -35,7 +39,6 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
 
     emit(state.copyWith(status: SignInStatus.loading));
 
-    // Todo: Integrate with real AuthService
     try {
       if (state.email.isEmpty || state.password.isEmpty) {
         emit(
@@ -47,8 +50,15 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
         return;
       }
 
-      await Future.delayed(const Duration(seconds: 1)); // Mock Network Delay
+      await _authRepository.signInWithEmail(state.email, state.password);
       emit(state.copyWith(status: SignInStatus.success));
+    } on FirebaseAuthException catch (e) {
+      emit(
+        state.copyWith(
+          status: SignInStatus.failure,
+          errorMessage: e.message ?? 'Sign in failed',
+        ),
+      );
     } catch (e) {
       emit(
         state.copyWith(
@@ -65,7 +75,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
   ) async {
     emit(state.copyWith(status: SignInStatus.loading));
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      await _authRepository.signInWithGoogle();
       emit(state.copyWith(status: SignInStatus.success));
     } catch (e) {
       emit(
@@ -81,6 +91,7 @@ class SignInBloc extends Bloc<SignInEvent, SignInState> {
     SignInApplePressed event,
     Emitter<SignInState> emit,
   ) async {
+    // Todo: Implement Apple Sign In in AuthRepository
     emit(state.copyWith(status: SignInStatus.loading));
     try {
       await Future.delayed(const Duration(seconds: 1));

@@ -1,12 +1,16 @@
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:injectable/injectable.dart';
+import '../../domain/repositories/auth_repository.dart';
 import 'sign_up_event.dart';
 import 'sign_up_state.dart';
 
 @injectable
 class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
-  SignUpBloc() : super(const SignUpState()) {
+  final AuthRepository _authRepository;
+
+  SignUpBloc(this._authRepository) : super(const SignUpState()) {
     on<SignUpUsernameChanged>(_onUsernameChanged);
     on<SignUpEmailChanged>(_onEmailChanged);
     on<SignUpPasswordChanged>(_onPasswordChanged);
@@ -82,8 +86,26 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
         return;
       }
 
-      await Future.delayed(const Duration(seconds: 1)); // Mock Network Delay
+      final credential = await _authRepository.signUpWithEmail(
+          state.email, state.password);
+      
+      // Attempt to update display name if user is created
+      if (credential.user != null && state.username.isNotEmpty) {
+        try {
+           await credential.user!.updateDisplayName(state.username);
+        } catch (_) {
+          // Ignore display name update failures for now
+        }
+      }
+
       emit(state.copyWith(status: SignUpStatus.success));
+    } on FirebaseAuthException catch (e) {
+      emit(
+        state.copyWith(
+          status: SignUpStatus.failure,
+          errorMessage: e.message ?? 'Sign up failed',
+        ),
+      );
     } catch (e) {
       emit(
         state.copyWith(
@@ -100,7 +122,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
   ) async {
     emit(state.copyWith(status: SignUpStatus.loading));
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      await _authRepository.signInWithGoogle();
       emit(state.copyWith(status: SignUpStatus.success));
     } catch (e) {
       emit(
@@ -116,6 +138,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     SignUpApplePressed event,
     Emitter<SignUpState> emit,
   ) async {
+    // Todo: Implement Apple Sign In
     emit(state.copyWith(status: SignUpStatus.loading));
     try {
       await Future.delayed(const Duration(seconds: 1));

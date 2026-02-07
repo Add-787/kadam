@@ -2,21 +2,34 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:injectable/injectable.dart';
 
-@lazySingleton
-class AuthService {
+abstract class AuthRemoteDataSource {
+  Future<UserCredential> signInWithEmail(String email, String password);
+  Future<UserCredential> signUpWithEmail(String email, String password);
+  Future<UserCredential?> signInWithGoogle();
+  Future<void> signOut();
+  Stream<User?> get userStream;
+  User? get currentUser;
+}
+
+@LazySingleton(as: AuthRemoteDataSource)
+class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
+  @override
   Stream<User?> get userStream => _auth.authStateChanges();
 
+  @override
   User? get currentUser => _auth.currentUser;
 
+  @override
   Future<UserCredential?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) return null;
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -28,22 +41,27 @@ class AuthService {
     }
   }
 
+  @override
   Future<UserCredential> signInWithEmail(String email, String password) async {
     try {
-      return await _auth.signInWithEmailAndPassword(email: email, password: password);
+      return await _auth.signInWithEmailAndPassword(
+          email: email, password: password);
     } catch (e) {
       rethrow;
     }
   }
 
+  @override
   Future<UserCredential> signUpWithEmail(String email, String password) async {
     try {
-      return await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      return await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
     } catch (e) {
       rethrow;
     }
   }
 
+  @override
   Future<void> signOut() async {
     await _googleSignIn.signOut();
     await _auth.signOut();
