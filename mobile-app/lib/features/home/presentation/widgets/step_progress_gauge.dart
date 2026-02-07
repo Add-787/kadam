@@ -6,54 +6,72 @@ class StepProgressGauge extends StatelessWidget {
   final int steps;
   final int goal;
 
-  const StepProgressGauge({super.key, required this.steps, required this.goal});
+  const StepProgressGauge({
+    super.key,
+    required this.steps,
+    required this.goal,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // Calculate progress (0.0 to 1.0)
+    final double progress = (steps / goal).clamp(0.0, 1.0);
+
     return SizedBox(
-      height: 220,
-      width: 280,
-      child: CustomPaint(
-        painter: _GaugePainter(
-          progress: steps / goal,
-          backgroundColor: const Color(0xFF4A4A3A),
-          progressColor: AppColors.primary,
-        ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 30),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '$steps',
-                  style: const TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.text,
-                    height: 1.0,
-                  ),
-                ),
-                Text(
-                  'of ${_formatNumber(goal)} steps',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFFC8A060),
-                  ),
-                ),
-              ],
+      height: 250, // Slightly increased height for better centering
+      width: 250,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: const Size(250, 250),
+            painter: _GaugePainter(
+              progress: progress,
+              backgroundColor: const Color(0xFF2C2C1E), // Darker background track
+              progressColor: AppColors.primary,
             ),
           ),
-        ),
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 20), // Offset to align with arc center
+              Icon(
+                Icons.directions_walk,
+                color: AppColors.primary.withOpacity(0.8),
+                size: 28,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$steps',
+                style: const TextStyle(
+                  fontSize: 42,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white, // Explicit white for visibility
+                  height: 1.0,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'of ${_formatNumber(goal)} steps',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white.withOpacity(0.6),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   String _formatNumber(int number) {
-    if (number >= 1000) {
-      return '${(number / 1000).toStringAsFixed(0)},${(number % 1000).toString().padLeft(3, '0')}';
+    final str = number.toString();
+    // Simple thousands separator
+    if (str.length > 3) {
+      return '${str.substring(0, str.length - 3)},${str.substring(str.length - 3)}';
     }
-    return number.toString();
+    return str;
   }
 }
 
@@ -71,18 +89,20 @@ class _GaugePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = min(size.width, size.height) / 2 - 15;
+    final radius = min(size.width, size.height) / 2 - 20;
 
-    const startAngle = 180 * pi / 180;
-    const sweepAngle = 180 * pi / 180;
+    // Start from bottom-left (135 degrees) to bottom-right (405 degrees)
+    // This creates a 270-degree arc (open at bottom)
+    const double startAngle = 135 * (pi / 180);
+    const double sweepAngle = 270 * (pi / 180);
 
-    // Background arc
     final backgroundPaint = Paint()
       ..color = backgroundColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 30
+      ..strokeWidth = 20
       ..strokeCap = StrokeCap.round;
 
+    // Draw Background Arc
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       startAngle,
@@ -91,38 +111,20 @@ class _GaugePainter extends CustomPainter {
       backgroundPaint,
     );
 
-    // Progress arc
     final progressPaint = Paint()
       ..color = progressColor
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 30
+      ..strokeWidth = 20
       ..strokeCap = StrokeCap.round;
 
+    // Draw Progress Arc
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       startAngle,
-      sweepAngle * progress.clamp(0.0, 1.0),
+      sweepAngle * progress,
       false,
       progressPaint,
     );
-
-    // Inner dots
-    final dotsRadius = radius - 22;
-    const totalDots = 12;
-
-    for (int i = 0; i < totalDots; i++) {
-      final t = i / (totalDots - 1);
-      final isActive = t <= progress;
-
-      final dotsPaint = Paint()
-        ..color = isActive ? progressColor : progressColor.withAlpha(50)
-        ..style = PaintingStyle.fill;
-
-      final angle = startAngle + (sweepAngle * t);
-      final dx = center.dx + dotsRadius * cos(angle);
-      final dy = center.dy + dotsRadius * sin(angle);
-      canvas.drawCircle(Offset(dx, dy), 2.5, dotsPaint);
-    }
   }
 
   @override
