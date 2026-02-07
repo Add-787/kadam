@@ -1,9 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+// import 'firebase_options.dart'; // Run 'flutterfire configure' to generate this file
 import 'core/config/injection.dart';
 import 'core/config/router.dart';
 import 'core/presentation/theme/app_colors.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase (Uncomment once firebase_options.dart is generated)
+  /*
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  */
+  
   configureDependencies();
   runApp(const KadamApp());
 }
