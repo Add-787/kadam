@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/config/injection.dart';
 import '../bloc/sign_in_bloc.dart';
 import '../bloc/sign_in_event.dart';
 import '../bloc/sign_in_state.dart';
@@ -9,8 +9,6 @@ import '../../../../core/presentation/theme/app_colors.dart';
 import '../../../../core/presentation/widgets/kadam_button.dart';
 import '../../../../core/presentation/widgets/kadam_text_field.dart';
 import '../../../../core/presentation/widgets/social_login_button.dart';
-
-final getIt = GetIt.instance;
 
 class SignInPage extends StatelessWidget {
   const SignInPage({super.key});
