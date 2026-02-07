@@ -1,4 +1,4 @@
-package com.example.kadam
+package com.psyluck.kadam
 
 import io.flutter.embedding.android.FlutterActivity
 
