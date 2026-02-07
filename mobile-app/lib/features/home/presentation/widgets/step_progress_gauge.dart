@@ -21,14 +21,14 @@ class StepProgressGauge extends StatelessWidget {
         ),
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.only(top: 20),
+            padding: const EdgeInsets.only(top: 30),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   '$steps',
                   style: const TextStyle(
-                    fontSize: 52,
+                    fontSize: 40,
                     fontWeight: FontWeight.bold,
                     color: AppColors.text,
                     height: 1.0,
@@ -73,8 +73,8 @@ class _GaugePainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = min(size.width, size.height) / 2 - 15;
 
-    const startAngle = 135 * pi / 180;
-    const sweepAngle = 270 * pi / 180;
+    const startAngle = 180 * pi / 180;
+    const sweepAngle = 180 * pi / 180;
 
     // Background arc
     final backgroundPaint = Paint()
@@ -107,15 +107,18 @@ class _GaugePainter extends CustomPainter {
     );
 
     // Inner dots
-    final dotsPaint = Paint()
-      ..color = progressColor.withAlpha(100)
-      ..style = PaintingStyle.fill;
-
-    final dotsRadius = radius - 35;
+    final dotsRadius = radius - 22;
     const totalDots = 12;
 
     for (int i = 0; i < totalDots; i++) {
-      final angle = startAngle + (sweepAngle * (i / (totalDots - 1)));
+      final t = i / (totalDots - 1);
+      final isActive = t <= progress;
+
+      final dotsPaint = Paint()
+        ..color = isActive ? progressColor : progressColor.withAlpha(50)
+        ..style = PaintingStyle.fill;
+
+      final angle = startAngle + (sweepAngle * t);
       final dx = center.dx + dotsRadius * cos(angle);
       final dy = center.dy + dotsRadius * sin(angle);
       canvas.drawCircle(Offset(dx, dy), 2.5, dotsPaint);
