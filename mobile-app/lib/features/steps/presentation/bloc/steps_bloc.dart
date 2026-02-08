@@ -76,7 +76,8 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
   StreamSubscription? _stepSubscription;
   StreamSubscription? _statusSubscription;
 
-  StepsBloc(this._stepRepository, this._authRepository) : super(StepsState(selectedDate: DateTime.now())) {
+  StepsBloc(this._stepRepository, this._authRepository)
+    : super(StepsState(selectedDate: DateTime.now())) {
     on<StepsStarted>(_onStarted);
     on<DateSelected>(_onDateSelected);
     on<_StepsUpdated>(_onStepsUpdated);
@@ -88,7 +89,7 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
     emit(state.copyWith(joinedDate: joinedDate));
 
     await _stepRepository.init();
-    
+
     _stepSubscription?.cancel();
     _stepSubscription = _stepRepository.stepStream.listen((steps) {
       add(_StepsUpdated(steps));
@@ -114,6 +115,10 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
         state.selectedDate.day == today.day) {
       emit(state.copyWith(steps: event.steps));
     }
+  }
+
+  void _onStatusUpdated(_StatusUpdated event, Emitter<StepsState> emit) {
+    emit(state.copyWith(status: event.status));
   }
 
   @override
