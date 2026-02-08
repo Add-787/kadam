@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../domain/repositories/step_repository.dart';
 import 'dart:async';
 
@@ -13,6 +14,13 @@ abstract class StepsEvent extends Equatable {
 }
 
 class StepsStarted extends StepsEvent {}
+
+class DateSelected extends StepsEvent {
+  final DateTime date;
+  const DateSelected(this.date);
+  @override
+  List<Object> get props => [date];
+}
 
 class _StepsUpdated extends StepsEvent {
   final int steps;
@@ -32,34 +40,53 @@ class _StatusUpdated extends StepsEvent {
 class StepsState extends Equatable {
   final int steps;
   final String status;
+  final DateTime selectedDate;
+  final DateTime? joinedDate;
 
-  const StepsState({this.steps = 0, this.status = 'unknown'});
+  const StepsState({
+    this.steps = 0,
+    this.status = 'unknown',
+    required this.selectedDate,
+    this.joinedDate,
+  });
 
-  StepsState copyWith({int? steps, String? status}) {
+  StepsState copyWith({
+    int? steps,
+    String? status,
+    DateTime? selectedDate,
+    DateTime? joinedDate,
+  }) {
     return StepsState(
       steps: steps ?? this.steps,
       status: status ?? this.status,
+      selectedDate: selectedDate ?? this.selectedDate,
+      joinedDate: joinedDate ?? this.joinedDate,
     );
   }
 
   @override
-  List<Object> get props => [steps, status];
+  List<Object?> get props => [steps, status, selectedDate, joinedDate];
 }
 
 // Bloc
 @injectable
 class StepsBloc extends Bloc<StepsEvent, StepsState> {
   final StepRepository _stepRepository;
+  final AuthRepository _authRepository;
   StreamSubscription? _stepSubscription;
   StreamSubscription? _statusSubscription;
 
-  StepsBloc(this._stepRepository) : super(const StepsState()) {
+  StepsBloc(this._stepRepository, this._authRepository) : super(StepsState(selectedDate: DateTime.now())) {
     on<StepsStarted>(_onStarted);
+    on<DateSelected>(_onDateSelected);
     on<_StepsUpdated>(_onStepsUpdated);
     on<_StatusUpdated>(_onStatusUpdated);
   }
 
   Future<void> _onStarted(StepsStarted event, Emitter<StepsState> emit) async {
+    final joinedDate = await _authRepository.getJoinedDate();
+    emit(state.copyWith(joinedDate: joinedDate));
+
     await _stepRepository.init();
     
     _stepSubscription?.cancel();
@@ -73,12 +100,20 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
     });
   }
 
-  void _onStepsUpdated(_StepsUpdated event, Emitter<StepsState> emit) {
-    emit(state.copyWith(steps: event.steps));
+  void _onDateSelected(DateSelected event, Emitter<StepsState> emit) {
+    emit(state.copyWith(selectedDate: event.date));
+    // For now, we just update the state.
+    // In a real app, this would trigger fetching data for the selected date.
   }
 
-  void _onStatusUpdated(_StatusUpdated event, Emitter<StepsState> emit) {
-    emit(state.copyWith(status: event.status));
+  void _onStepsUpdated(_StepsUpdated event, Emitter<StepsState> emit) {
+    // Only update steps if the selected date is today.
+    final today = DateTime.now();
+    if (state.selectedDate.year == today.year &&
+        state.selectedDate.month == today.month &&
+        state.selectedDate.day == today.day) {
+      emit(state.copyWith(steps: event.steps));
+    }
   }
 
   @override

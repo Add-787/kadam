@@ -57,6 +57,13 @@ class SignInView extends StatelessWidget {
                 );
             }
             if (state.status == SignInStatus.success) {
+              // Save userId to SharedPreferences for background tasks
+              final userId = getIt<FirebaseAuth>().currentUser?.uid;
+              if (userId != null) {
+                SharedPreferences.getInstance().then((prefs) {
+                  prefs.setString('user_id', userId);
+                });
+              }
               // Navigate to Home
               context.go('/home');
             }

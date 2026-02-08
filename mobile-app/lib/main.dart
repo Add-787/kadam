@@ -4,6 +4,7 @@ import 'package:kadam/firebase_options.dart';
 // import 'firebase_options.dart'; // Run 'flutterfire configure' to generate this file
 import 'core/config/injection.dart';
 import 'core/config/router.dart';
+import 'core/config/work_manager_config.dart';
 import 'core/presentation/theme/app_colors.dart';
 
 void main() async {
@@ -15,6 +16,11 @@ void main() async {
   );
   
   configureDependencies();
+
+  // Initialize and register background sync
+  await WorkManagerConfig.initialize();
+  await WorkManagerConfig.registerPeriodicTask();
+
   runApp(const KadamApp());
 }
 

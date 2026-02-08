@@ -87,16 +87,7 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
       }
 
       final credential = await _authRepository.signUpWithEmail(
-          state.email, state.password);
-      
-      // Attempt to update display name if user is created
-      if (credential.user != null && state.username.isNotEmpty) {
-        try {
-           await credential.user!.updateDisplayName(state.username);
-        } catch (_) {
-          // Ignore display name update failures for now
-        }
-      }
+          state.email, state.password, username: state.username);
 
       emit(state.copyWith(status: SignUpStatus.success));
     } on FirebaseAuthException catch (e) {

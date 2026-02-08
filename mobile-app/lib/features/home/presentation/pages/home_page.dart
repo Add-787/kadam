@@ -44,7 +44,11 @@ class HomePage extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       // Date Selector
-                      const DateSelector(),
+                      BlocBuilder<StepsBloc, StepsState>(
+                        builder: (context, state) {
+                          return DateSelector(joinedDate: state.joinedDate);
+                        },
+                      ),
                       const SizedBox(height: 24),
 
                       // View All Button

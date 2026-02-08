@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 class UserModel extends Equatable {
@@ -20,12 +21,24 @@ class UserModel extends Equatable {
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map, String documentId) {
+    DateTime createdAt;
+    final rawCreatedAt = map['createdAt'];
+    if (rawCreatedAt is Timestamp) {
+      createdAt = rawCreatedAt.toDate();
+    } else if (rawCreatedAt is String) {
+      createdAt = DateTime.tryParse(rawCreatedAt) ?? DateTime.now();
+    } else if (rawCreatedAt is DateTime) {
+      createdAt = rawCreatedAt;
+    } else {
+      createdAt = DateTime.now();
+    }
+
     return UserModel(
       id: documentId,
       displayName: map['displayName'] ?? '',
       email: map['email'] ?? '',
       photoUrl: map['photoUrl'],
-      createdAt: (map['createdAt'] as DateTime?) ?? DateTime.now(),
+      createdAt: createdAt,
       connectedSources: List<String>.from(map['connectedSources'] ?? []),
       preferences: Map<String, dynamic>.from(map['preferences'] ?? {}),
     );
