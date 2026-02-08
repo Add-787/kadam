@@ -1,34 +1,34 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:injectable/injectable.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import '../../../auth/domain/repositories/auth_repository.dart';
 import '../../domain/repositories/step_repository.dart';
 import '../datasources/step_local_data_source.dart';
 
 @LazySingleton(as: StepRepository)
 class StepRepositoryImpl implements StepRepository {
   final StepLocalDataSource _localDataSource;
+  final AuthRepository _authRepository;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final StreamController<int> _stepController = StreamController.broadcast();
-  final StreamController<String> _statusController = StreamController.broadcast();
   
   StreamSubscription<StepCount>? _stepSubscription;
-  StreamSubscription<PedestrianStatus>? _statusSubscription;
 
   static const String _keyStartOfDaySteps = 'sensor_value_at_start_of_day';
   static const String _keyLastKnownDate = 'last_known_date';
+  static const String _keyDailyStepGoal = 'daily_step_goal';
 
   int _startOfDaySteps = 0;
   String? _lastKnownDate;
   late SharedPreferences _prefs;
 
-  StepRepositoryImpl(this._localDataSource);
+  StepRepositoryImpl(this._localDataSource, this._authRepository);
 
   @override
   Stream<int> get stepStream => _stepController.stream;
-
-  @override
-  Stream<String> get statusStream => _statusController.stream;
 
   @override
   Future<void> init() async {
@@ -40,7 +40,26 @@ class StepRepositoryImpl implements StepRepository {
     if (granted) {
       _startListening();
     } else {
-      _statusController.add('Permission Denied');
+      _stepController.addError('Permission Denied');
+    }
+  }
+
+  @override
+  Future<int> getDailyGoal() async {
+    _prefs = await SharedPreferences.getInstance();
+    return _prefs.getInt(_keyDailyStepGoal) ?? 10000;
+  }
+
+  @override
+  Future<void> setDailyGoal(int goal) async {
+    _prefs = await SharedPreferences.getInstance();
+    await _prefs.setInt(_keyDailyStepGoal, goal);
+
+    final user = _authRepository.currentUser;
+    if (user != null) {
+      await _firestore.collection('users').doc(user.uid).set({
+        'daily_step_goal': goal,
+      }, SetOptions(merge: true));
     }
   }
 
@@ -50,16 +69,7 @@ class StepRepositoryImpl implements StepRepository {
         _handleStepUpdate(stepCount.steps);
       },
       onError: (error) {
-        _statusController.add('Error: $error');
-      },
-    );
-
-    _statusSubscription = _localDataSource.pedestrianStatusStream.listen(
-      (status) {
-        _statusController.add(status.status);
-      },
-      onError: (error) {
-        _statusController.add('Status Error: $error');
+        _stepController.addError(error);
       },
     );
   }
@@ -89,8 +99,6 @@ class StepRepositoryImpl implements StepRepository {
   
   void dispose() {
     _stepSubscription?.cancel();
-    _statusSubscription?.cancel();
     _stepController.close();
-    _statusController.close();
   }
 }

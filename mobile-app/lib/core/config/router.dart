@@ -7,6 +7,7 @@ import '../../features/auth/presentation/pages/sign_in_page.dart';
 import '../../features/auth/presentation/pages/sign_up_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/history/presentation/pages/history_page.dart';
+import '../../features/steps/presentation/pages/change_goal_page.dart';
 import '../../features/friends/presentation/pages/friends_page.dart';
 import '../../features/leaderboards/presentation/pages/leaderboards_page.dart';
 import '../../features/settings/presentation/pages/settings_page.dart';
@@ -79,6 +80,10 @@ final router = GoRouter(
     GoRoute(
       path: '/history',
       builder: (context, state) => const HistoryPage(),
+    ),
+    GoRoute(
+      path: '/change-goal',
+      builder: (context, state) => const ChangeGoalPage(),
     ),
   ],
 );

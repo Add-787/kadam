@@ -15,6 +15,13 @@ abstract class StepsEvent extends Equatable {
 
 class StepsStarted extends StepsEvent {}
 
+class GoalChanged extends StepsEvent {
+  final int dailyGoal;
+  const GoalChanged(this.dailyGoal);
+  @override
+  List<Object> get props => [dailyGoal];
+}
+
 class DateSelected extends StepsEvent {
   final DateTime date;
   const DateSelected(this.date);
@@ -29,43 +36,36 @@ class _StepsUpdated extends StepsEvent {
   List<Object> get props => [steps];
 }
 
-class _StatusUpdated extends StepsEvent {
-  final String status;
-  const _StatusUpdated(this.status);
-  @override
-  List<Object> get props => [status];
-}
-
 // State
 class StepsState extends Equatable {
   final int steps;
-  final String status;
+  final int dailyGoal;
   final DateTime selectedDate;
   final DateTime? joinedDate;
 
   const StepsState({
     this.steps = 0,
-    this.status = 'unknown',
+    this.dailyGoal = 10000,
     required this.selectedDate,
     this.joinedDate,
   });
 
   StepsState copyWith({
     int? steps,
-    String? status,
+    int? dailyGoal,
     DateTime? selectedDate,
     DateTime? joinedDate,
   }) {
     return StepsState(
       steps: steps ?? this.steps,
-      status: status ?? this.status,
+      dailyGoal: dailyGoal ?? this.dailyGoal,
       selectedDate: selectedDate ?? this.selectedDate,
       joinedDate: joinedDate ?? this.joinedDate,
     );
   }
 
   @override
-  List<Object?> get props => [steps, status, selectedDate, joinedDate];
+  List<Object?> get props => [steps, dailyGoal, selectedDate, joinedDate];
 }
 
 // Bloc
@@ -74,19 +74,19 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
   final StepRepository _stepRepository;
   final AuthRepository _authRepository;
   StreamSubscription? _stepSubscription;
-  StreamSubscription? _statusSubscription;
 
   StepsBloc(this._stepRepository, this._authRepository)
     : super(StepsState(selectedDate: DateTime.now())) {
     on<StepsStarted>(_onStarted);
+    on<GoalChanged>(_onGoalChanged);
     on<DateSelected>(_onDateSelected);
     on<_StepsUpdated>(_onStepsUpdated);
-    on<_StatusUpdated>(_onStatusUpdated);
   }
 
   Future<void> _onStarted(StepsStarted event, Emitter<StepsState> emit) async {
     final joinedDate = await _authRepository.getJoinedDate();
-    emit(state.copyWith(joinedDate: joinedDate));
+    final dailyGoal = await _stepRepository.getDailyGoal();
+    emit(state.copyWith(joinedDate: joinedDate, dailyGoal: dailyGoal));
 
     await _stepRepository.init();
 
@@ -94,11 +94,11 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
     _stepSubscription = _stepRepository.stepStream.listen((steps) {
       add(_StepsUpdated(steps));
     });
+  }
 
-    _statusSubscription?.cancel();
-    _statusSubscription = _stepRepository.statusStream.listen((status) {
-      add(_StatusUpdated(status));
-    });
+  Future<void> _onGoalChanged(GoalChanged event, Emitter<StepsState> emit) async {
+    emit(state.copyWith(dailyGoal: event.dailyGoal));
+    await _stepRepository.setDailyGoal(event.dailyGoal);
   }
 
   void _onDateSelected(DateSelected event, Emitter<StepsState> emit) {
@@ -117,14 +117,9 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
     }
   }
 
-  void _onStatusUpdated(_StatusUpdated event, Emitter<StepsState> emit) {
-    emit(state.copyWith(status: event.status));
-  }
-
   @override
   Future<void> close() {
     _stepSubscription?.cancel();
-    _statusSubscription?.cancel();
     return super.close();
   }
 }

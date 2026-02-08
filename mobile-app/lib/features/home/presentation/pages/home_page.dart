@@ -14,10 +14,8 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => GetIt.I<StepsBloc>()..add(StepsStarted()),
-      child: Scaffold(
-        backgroundColor: AppColors.background,
+    return Scaffold(
+      backgroundColor: AppColors.background,
         body: Container(
           decoration: const BoxDecoration(
             gradient: RadialGradient(
@@ -84,25 +82,9 @@ class HomePage extends StatelessWidget {
                       Center(
                         child: BlocBuilder<StepsBloc, StepsState>(
                           builder: (context, state) {
-                            if (state.status == 'Permission Denied') {
-                              return Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.red.withOpacity(0.5)),
-                                ),
-                                child: const Text(
-                                  'Please enable activity permissions to track steps',
-                                  style: TextStyle(color: Colors.redAccent),
-                                  textAlign: TextAlign.center,
-                                ),
-                              );
-                            }
-
                             return StepProgressGauge(
                               steps: state.steps,
-                              goal: 10000,
+                              goal: state.dailyGoal,
                             );
                           },
                         ),
@@ -114,7 +96,7 @@ class HomePage extends StatelessWidget {
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
-                          onPressed: () {},
+                          onPressed: () => context.push('/change-goal'),
                            style: TextButton.styleFrom(
                             foregroundColor: AppColors.primary,
                             padding: EdgeInsets.zero,
