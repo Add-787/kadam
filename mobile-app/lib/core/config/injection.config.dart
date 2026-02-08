@@ -25,6 +25,11 @@ import '../../features/steps/data/repositories/step_repository_impl.dart'
     as _i202;
 import '../../features/steps/domain/repositories/step_repository.dart' as _i203;
 import '../../features/steps/presentation/bloc/steps_bloc.dart' as _i204;
+import '../../features/history/data/repositories/history_repository_impl.dart'
+    as _i301;
+import '../../features/history/domain/repositories/history_repository.dart'
+    as _i302;
+import '../../features/history/presentation/bloc/history_bloc.dart' as _i303;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -49,6 +54,12 @@ extension GetItInjectableX on _i174.GetIt {
         () => _i202.StepRepositoryImpl(gh<_i201.StepLocalDataSource>()));
     gh.factory<_i204.StepsBloc>(
         () => _i204.StepsBloc(gh<_i203.StepRepository>()));
+
+    // History Module
+    gh.lazySingleton<_i302.HistoryRepository>(
+        () => _i301.HistoryRepositoryImpl());
+    gh.factory<_i303.HistoryBloc>(
+        () => _i303.HistoryBloc(gh<_i302.HistoryRepository>()));
 
     return this;
   }

@@ -29,176 +29,207 @@ class SignUpView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: BlocListener<SignUpBloc, SignUpState>(
-        listener: (context, state) {
-          if (state.status == SignUpStatus.failure) {
-            ScaffoldMessenger.of(context)
-              ..hideCurrentSnackBar()
-              ..showSnackBar(
-                SnackBar(content: Text(state.errorMessage ?? 'Sign Up Failed')),
-              );
-          }
-          if (state.status == SignUpStatus.success) {
-            context.go('/home');
-          }
-        },
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const SizedBox(height: 40),
-                const Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -0.6), // Light burst from top center
+            radius: 1.2,
+            colors: [
+              Color(0xFF2C2C20), // Subtle yellow tint at top
+              AppColors.background,
+            ],
+          ),
+        ),
+        child: BlocListener<SignUpBloc, SignUpState>(
+          listener: (context, state) {
+            if (state.status == SignUpStatus.failure) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      state.errorMessage ?? 'Sign Up Failed',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    backgroundColor: Colors.red.shade900,
+                  ),
+                );
+            }
+            if (state.status == SignUpStatus.success) {
+              context.go('/home');
+            }
+          },
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 60),
+                  // Logo Area
+                  const Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.bolt,
+                          color: AppColors.primary,
+                          size: 64, // Larger icon
+                        ),
+                        SizedBox(height: 12),
+                        Text(
+                          'Kadam',
+                          style: TextStyle(
+                            fontSize: 42,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: -1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Title
+                  const Text(
+                    'Sign up to your account',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Join our journey! Select method to sign up',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 14, color: AppColors.subtext),
+                  ),
+                  const SizedBox(height: 48),
+
+                  KadamTextField(
+                    hint: 'Enter a username',
+                    icon: Icons.person_outline_rounded,
+                    onChanged: (value) => context.read<SignUpBloc>().add(
+                      SignUpUsernameChanged(value),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  KadamTextField(
+                    hint: 'Enter your mail',
+                    icon: Icons.mail_outline_rounded,
+                    onChanged: (value) =>
+                        context.read<SignUpBloc>().add(SignUpEmailChanged(value)),
+                  ),
+                  const SizedBox(height: 16),
+
+                  KadamTextField(
+                    hint: 'Enter your password',
+                    icon: Icons.lock_outline_rounded,
+                    obscureText: true,
+                    onChanged: (value) => context.read<SignUpBloc>().add(
+                      SignUpPasswordChanged(value),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  KadamTextField(
+                    hint: 'Confirm password',
+                    icon: Icons.lock_outline_rounded,
+                    obscureText: true,
+                    onChanged: (value) => context.read<SignUpBloc>().add(
+                      SignUpConfirmPasswordChanged(value),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  BlocBuilder<SignUpBloc, SignUpState>(
+                    builder: (context, state) {
+                      return KadamButton(
+                        label: 'Sign up',
+                        isLoading: state.status == SignUpStatus.loading,
+                        onPressed: () => context.read<SignUpBloc>().add(
+                          const SignUpSubmitted(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Divider
+                  const Row(
                     children: [
-                      Icon(Icons.bolt, color: AppColors.primary, size: 40),
-                      SizedBox(width: 8),
-                      Text(
-                        'Kadam',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.text,
+                      Expanded(
+                          child: Divider(
+                              color: AppColors.accent, thickness: 1)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'Or continue with',
+                          style: TextStyle(color: AppColors.subtext, fontSize: 12),
+                        ),
+                      ),
+                      Expanded(
+                          child: Divider(
+                              color: AppColors.accent, thickness: 1)),
+                    ],
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Social Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SocialLoginButton(
+                          icon: Icons.g_mobiledata,
+                          label: 'Google',
+                          onPressed: () => context.read<SignUpBloc>().add(
+                            const SignUpGooglePressed(),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: SocialLoginButton(
+                          icon: Icons.apple,
+                          label: 'Apple',
+                          onPressed: () => context.read<SignUpBloc>().add(
+                            const SignUpApplePressed(),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 20),
 
-                const Text(
-                  'Sign up to your account',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Join our journey! Select method to sign up',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.hint),
-                ),
-                const SizedBox(height: 30),
+                  const SizedBox(height: 48),
 
-                KadamTextField(
-                  hint: 'Enter a username',
-                  icon: Icons.person_outline,
-                  onChanged: (value) => context.read<SignUpBloc>().add(
-                    SignUpUsernameChanged(value),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                KadamTextField(
-                  hint: 'Enter your mail',
-                  icon: Icons.email_outlined,
-                  onChanged: (value) =>
-                      context.read<SignUpBloc>().add(SignUpEmailChanged(value)),
-                ),
-                const SizedBox(height: 16),
-
-                KadamTextField(
-                  hint: 'Enter your password',
-                  icon: Icons.lock_outline,
-                  obscureText: true,
-                  onChanged: (value) => context.read<SignUpBloc>().add(
-                    SignUpPasswordChanged(value),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                KadamTextField(
-                  hint: 'Confirm password',
-                  icon: Icons.lock_outline,
-                  obscureText: true,
-                  onChanged: (value) => context.read<SignUpBloc>().add(
-                    SignUpConfirmPasswordChanged(value),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                BlocBuilder<SignUpBloc, SignUpState>(
-                  builder: (context, state) {
-                    return KadamButton(
-                      label: 'Sign up',
-                      isLoading: state.status == SignUpStatus.loading,
-                      onPressed: () => context.read<SignUpBloc>().add(
-                        const SignUpSubmitted(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        "Have an account? ",
+                        style: TextStyle(color: AppColors.subtext),
                       ),
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 24),
-
-                const Row(
-                  children: [
-                    Expanded(child: Divider(color: AppColors.hint)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'Or continue with',
-                        style: TextStyle(color: AppColors.hint),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: AppColors.hint)),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: SocialLoginButton(
-                        icon: Icons.g_mobiledata,
-                        label: 'Google',
-                        onPressed: () => context.read<SignUpBloc>().add(
-                          const SignUpGooglePressed(),
+                      GestureDetector(
+                        onTap: () => context.go('/sign-in'),
+                        child: const Text(
+                          'Sign in',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: SocialLoginButton(
-                        icon: Icons.apple,
-                        label: 'Apple',
-                        onPressed: () => context.read<SignUpBloc>().add(
-                          const SignUpApplePressed(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Have an account? ",
-                      style: TextStyle(color: AppColors.text),
-                    ),
-                    GestureDetector(
-                      onTap: () => context.go('/sign-in'),
-                      child: const Text(
-                        'Sign in',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-              ],
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
           ),
         ),

@@ -9,8 +9,9 @@ class DateSelector extends StatefulWidget {
 }
 
 class _DateSelectorState extends State<DateSelector> {
-  int _selectedIndex = 2; // Default to '07 Mon' as per screenshot
+  int _selectedIndex = 2; // Default to '07 Mon'
 
+  // Mock data for UI - In real app, this would be dynamic
   final List<Map<String, String>> _dates = [
     {'day': '05', 'weekday': 'Sat'},
     {'day': '06', 'weekday': 'Sun'},
@@ -23,24 +24,26 @@ class _DateSelectorState extends State<DateSelector> {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 72,
+      height: 90, // Taller capsule
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _dates.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
+        separatorBuilder: (context, index) => const SizedBox(width: 16),
         itemBuilder: (context, index) {
           final isSelected = index == _selectedIndex;
           final date = _dates[index];
+          
           return GestureDetector(
             onTap: () => setState(() => _selectedIndex = index),
-            child: Container(
-              width: 56,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 64,
               decoration: BoxDecoration(
                 color: isSelected ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(32), // Full capsule
                 border: Border.all(
                   color: isSelected ? AppColors.primary : AppColors.surface,
-                  width: 1,
+                  width: 1.5,
                 ),
               ),
               child: Column(
@@ -49,17 +52,18 @@ class _DateSelectorState extends State<DateSelector> {
                   Text(
                     date['day']!,
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.black : AppColors.text,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected ? Colors.black : Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     date['weekday']!,
                     style: TextStyle(
-                      fontSize: 12,
-                      color: isSelected ? Colors.black : AppColors.hint,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.black.withOpacity(0.7) : AppColors.subtext,
                     ),
                   ),
                 ],
