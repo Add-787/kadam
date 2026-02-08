@@ -82,6 +82,7 @@ lib/src/
 - Step count aggregation from multiple devices
 - Daily, weekly, and monthly statistics
 - Historical data storage in Firestore
+- configurable daily step goal
 
 ### 3. Social Module
 - Friend connections and management
@@ -120,6 +121,7 @@ class User {
   DateTime createdAt;
   List<String> connectedSources; // e.g. ["Apple Watch", "iPhone"]
   Map<String, dynamic> preferences;
+  int dailyStepGoal; // default 10000
 }
 
 ### Friend
@@ -178,6 +180,7 @@ users/
   {userId}/
     - profile data
     - settings
+    - daily_step_goal (int)
     devices/
       {deviceId}/
         - device info

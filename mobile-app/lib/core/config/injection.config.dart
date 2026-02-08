@@ -67,11 +67,14 @@ extension GetItInjectableX on _i174.GetIt {
     gh.factory<_i1044.SignUpBloc>(
       () => _i1044.SignUpBloc(gh<_i787.AuthRepository>()),
     );
-    gh.lazySingleton<_i206.StepRepository>(
-      () => _i906.StepRepositoryImpl(gh<_i264.StepLocalDataSource>()),
-    );
     gh.factory<_i1070.HistoryBloc>(
       () => _i1070.HistoryBloc(gh<_i142.HistoryRepository>()),
+    );
+    gh.lazySingleton<_i206.StepRepository>(
+      () => _i906.StepRepositoryImpl(
+        gh<_i264.StepLocalDataSource>(),
+        gh<_i787.AuthRepository>(),
+      ),
     );
     gh.factory<_i203.StepsBloc>(
       () => _i203.StepsBloc(
