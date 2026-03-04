@@ -2,6 +2,9 @@ abstract class StepRepository {
   /// Returns a stream of the current step count from the device pedometer.
   Stream<int> get stepStream;
 
+  /// Returns the current accumulated steps synchronously.
+  int get currentSteps;
+
   /// Initializes the step tracking (requests permissions).
   Future<void> init();
 

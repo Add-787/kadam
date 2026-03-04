@@ -86,14 +86,22 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
   Future<void> _onStarted(StepsStarted event, Emitter<StepsState> emit) async {
     final joinedDate = await _authRepository.getJoinedDate();
     final dailyGoal = await _stepRepository.getDailyGoal();
-    emit(state.copyWith(joinedDate: joinedDate, dailyGoal: dailyGoal));
+    
+    // Immediate UI update from cache
+    final currentSteps = _stepRepository.currentSteps;
+    emit(state.copyWith(
+      joinedDate: joinedDate, 
+      dailyGoal: dailyGoal,
+      steps: currentSteps,
+    ));
 
-    await _stepRepository.init();
-
+    // Subscribe before init to avoid missing broadcast events
     _stepSubscription?.cancel();
     _stepSubscription = _stepRepository.stepStream.listen((steps) {
       add(_StepsUpdated(steps));
     });
+
+    await _stepRepository.init();
   }
 
   Future<void> _onGoalChanged(GoalChanged event, Emitter<StepsState> emit) async {

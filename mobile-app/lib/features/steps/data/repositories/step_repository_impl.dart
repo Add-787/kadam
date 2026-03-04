@@ -32,8 +32,13 @@ class StepRepositoryImpl implements StepRepository {
   Stream<int> get stepStream => _stepController.stream;
 
   @override
+  int get currentSteps => _dailyStepsAccumulated;
+
+  @override
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    
+    // Refresh daily steps from prefs in case they were updated elsewhere
     _dailyStepsAccumulated = _prefs.getInt(_keyDailyStepsAccumulated) ?? 0;
     _lastStepUpdateDate = _prefs.getString(_keyLastStepUpdateDate);
 
@@ -41,6 +46,7 @@ class StepRepositoryImpl implements StepRepository {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     if (_lastStepUpdateDate != today) {
       _dailyStepsAccumulated = 0;
+      _lastStepUpdateDate = today; // Update local variable too
       await _prefs.setInt(_keyDailyStepsAccumulated, 0);
       await _prefs.setString(_keyLastStepUpdateDate, today);
       await _prefs.remove(_keyLastSensorSteps);
@@ -130,7 +136,16 @@ class StepRepositoryImpl implements StepRepository {
     }
 
     int? lastSensorStepsStored = _prefs.getInt(_keyLastSensorSteps);
-    int lastSensorSteps = lastSensorStepsStored ?? currentSensorSteps;
+    
+    // If we have no record of last sensor steps, store the current one
+    // but don't reset _dailyStepsAccumulated if it already has value (e.g. from app restart)
+    if (lastSensorStepsStored == null) {
+      await _prefs.setInt(_keyLastSensorSteps, currentSensorSteps);
+      _stepController.add(_dailyStepsAccumulated);
+      return;
+    }
+
+    int lastSensorSteps = lastSensorStepsStored;
     int delta = currentSensorSteps - lastSensorSteps;
 
     if (delta < 0) {
