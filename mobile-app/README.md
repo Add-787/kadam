@@ -4,7 +4,7 @@ A new Flutter project.
 
 ## Getting Started
 
-This project is a starting point for the Kadam Flutter application.
+This project is a starting point for the Kadam Flutter application. This application tracks your daily steps.
 
 A few resources to get you started if this is your first Flutter project:
 

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/presentation/theme/app_colors.dart';
-import '../widgets/custom_bottom_nav_bar.dart';
+import '../../../steps/presentation/bloc/steps_bloc.dart';
 import '../widgets/date_selector.dart';
 import '../widgets/home_header.dart';
 import '../widgets/stat_card.dart';
@@ -13,138 +16,166 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 16),
-
-                  // Header
-                  const HomeHeader(userName: 'User'),
-                  const SizedBox(height: 32),
-
-                  // Date Selector
-                  const DateSelector(),
-
-                  // View All Button
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'View All',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 14,
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 12,
-                            color: AppColors.primary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  // Step Progress Gauge
-                  const Center(
-                    child: StepProgressGauge(steps: 6300, goal: 10000),
-                  ),
-
-                  // Change Goal Button
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {},
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Change Goal',
-                            style: TextStyle(
-                              color: AppColors.primary,
-                              fontSize: 14,
-                            ),
-                          ),
-                          SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            size: 12,
-                            color: AppColors.primary,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Other Stats Title
-                  const Text(
-                    'Other Stats',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.text,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Stat Cards Row
-                  const Row(
-                    children: [
-                      Expanded(
-                        child: StatCard(
-                          icon: Icons.directions_walk,
-                          value: '2.1 km',
-                          label: 'Distance Covered',
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: StatCard(
-                          icon: Icons.water_drop,
-                          value: '778 kcal',
-                          label: 'Calories burned',
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Expanded(
-                        child: StatCard(
-                          icon: Icons.stairs,
-                          value: '4',
-                          label: 'Stairs Climbed',
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Bottom padding for nav bar
-                  const SizedBox(height: 100),
-                ],
-              ),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment(0, -0.8), // Light burst from very top
+              radius: 1.5,
+              colors: [
+                Color(0xFF2C2C20), // Subtle yellow tint
+                AppColors.background,
+              ],
             ),
           ),
+          child: Stack(
+            children: [
+              SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 16),
 
-          // Bottom Navigation Bar
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: CustomBottomNavBar(),
+                      // Header
+                      const HomeHeader(userName: 'User'),
+                      const SizedBox(height: 32),
+
+                      // Date Selector
+                      BlocBuilder<StepsBloc, StepsState>(
+                        builder: (context, state) {
+                          return DateSelector(joinedDate: state.joinedDate);
+                        },
+                      ),
+                      const SizedBox(height: 24),
+
+                      // View All Button
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => context.push('/history'),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'View All',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 12,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // Step Progress Gauge (Connected to BLoC)
+                      Center(
+                        child: BlocBuilder<StepsBloc, StepsState>(
+                          builder: (context, state) {
+                            return StepProgressGauge(
+                              steps: state.steps,
+                              goal: state.dailyGoal,
+                            );
+                          },
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+
+                      // Change Goal Button
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () => context.push('/change-goal'),
+                           style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Change Goal',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                   fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              SizedBox(width: 4),
+                              Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 12,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // Other Stats Title
+                      const Text(
+                        'Other Stats',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Stat Cards Row
+                      const Row(
+                        children: [
+                          Expanded(
+                            child: StatCard(
+                              icon: Icons.directions_walk_rounded,
+                              value: '2.1 km',
+                              label: 'Distance Covered',
+                              color: Color(0xFFE6A23C), // Orange-ish
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: StatCard(
+                              icon: Icons.local_fire_department_rounded,
+                              value: '778 kcal',
+                              label: 'Calories burned',
+                              color: Color(0xFFFFCC00), // Yellow
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: StatCard(
+                              icon: Icons.stairs_rounded,
+                              value: '4',
+                              label: 'Stairs Climbed',
+                              color: Color(0xFFA6A65E), // Olive
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      // Bottom padding for nav bar
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
     );
   }
 }

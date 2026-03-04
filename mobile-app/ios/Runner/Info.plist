@@ -41,6 +41,16 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSMotionUsageDescription</key>
+	<string>This application tracks your steps</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Kadam reads your step count to show your daily activity progress.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Kadam writes step data to Apple Health.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>processing</string>
+	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

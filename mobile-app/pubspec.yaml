@@ -41,6 +41,12 @@ dependencies:
   firebase_auth: ^5.1.0
   cloud_firestore: ^5.0.1
   google_sign_in: ^6.2.1
+  pedometer: ^4.0.0
+  health: ^11.0.0
+  permission_handler: ^11.0.1
+  intl: ^0.19.0
+  shared_preferences: ^2.2.2
+  workmanager: ^0.9.0
 
 dev_dependencies:
   flutter_test:
@@ -54,6 +60,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -96,3 +103,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+
+flutter_launcher_icons:
+  image_path: "assets/icon.png"
+  android: true
+  ios: true
+  adaptive_icon_background: "#FFC107"
+  adaptive_icon_foreground: "assets/icon.png"
