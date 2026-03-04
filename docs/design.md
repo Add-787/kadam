@@ -78,11 +78,11 @@ lib/src/
   - *Note: Onboarding (Height, Weight, Gender) is deferred to after sign-up.*
 
 ### 2. Step Tracking Module
-- Integration with device pedometer/health APIs
-- Step count aggregation from multiple devices
-- Daily, weekly, and monthly statistics
-- Historical data storage in Firestore
-- configurable daily step goal
+- **Reboot-Proof Tracking**: Real-time step counting using persistent delta-based accumulation to handle device reboots and sensor resets.
+- **Time-Travel Support**: Seamlessly switch between live sensor data for the current day and historical data from Firestore for past dates.
+- **Background Sync**: Automated background synchronization via `Workmanager` that persists accumulated totals and handles cross-day resets.
+- **Historical Insights**: Daily, weekly, and monthly statistics retrieved from a unified repository.
+- **Configurable Goals**: Customizable daily step goals with progress tracking.
 
 ### 3. Social Module
 - Friend connections and management
@@ -181,18 +181,13 @@ users/
     - profile data
     - settings
     - daily_step_goal (int)
+    daily_steps/
+      {yyyy-MM-dd}/
+        - stepCount
+        - lastUpdated
     devices/
       {deviceId}/
         - device info
-
-dailySteps/
-  {date_deviceId}/
-    - stepCount
-    - caloriesBurned
-    - distanceMeters
-    - flightsClimbed
-    - lastUpdated
-    - hourlyBreakdown (map)
 
 groups/
   {groupId}/
@@ -217,7 +212,7 @@ friends/
 erDiagram
     USERS ||--o{ DEVICES : "subcollection: devices"
     USERS ||--o{ FRIENDS : "subcollection: friends"
-    USERS ||--o{ DAILY_STEP_RECORDS : "referenced by userId"
+    USERS ||--o{ DAILY_STEP_RECORDS : "subcollection: daily_steps"
     GROUPS ||--o{ GROUP_MEMBERS : "subcollection: members"
     GROUPS ||--o{ GROUP_LEADERBOARDS : "subcollection: leaderboards"
 
@@ -237,13 +232,8 @@ erDiagram
 
     DAILY_STEP_RECORDS {
         string id PK
-        string userId FK
         int stepCount
-        int caloriesBurned
-        float distanceMeters
-        int flightsClimbed
         timestamp lastUpdated
-        map hourlyBreakdown
     }
 
     GROUPS {
@@ -251,6 +241,7 @@ erDiagram
         string name
         string creatorId FK
     }
+```
 
     GROUP_LEADERBOARDS {
         string id PK
@@ -274,18 +265,28 @@ erDiagram
 - **Rationale**: Real-time sync, scalability, built-in authentication, reduced backend development
 - **Implementation**: Direct Firestore integration with local caching
 
-### 4. Multi-Device Sync Strategy
-- **Approach**: "Aggregated Source" model.
-- **Implementation**:
-    - Each primary device (Phone/Tablet) reads 'Total Steps' from its local Health Store (Apple Health/Google Fit).
-    - Health Store handles local de-duplication (e.g. Watch + Phone merge).
-    - We upload ONE document per day per primary device (e.g. `steps_2025-01-12_iphone`).
-    - **Device List**: We locally scan health data sources to update a `sourceDevices` list in the User profile for UI display.
-- **Conflict Resolution**:
-    - Server sums up the totals from different primary devices (e.g. iPhone + Pixel).
-    - Note: This accepts a small risk of double-counting if a user carries TWO phones simultaneously, but simpler than full raw conflict resolution.
+### 4. Step Counting Logic & Sync Strategy
+- **Actual Daily Step Count (Reboot-Proof)**:
+    - **Persistent Delta Accumulation**: Switched from simple "Total - Start" subtraction to a delta-based accumulation. The app calculates the difference (delta) between consecutive sensor readings and adds it to a cumulative total.
+    - **Reboot Handling**: Phone reboots reset the hardware sensor to 0. The app detects this by checking for negative deltas; if the current sensor value is less than the last known value, the app treats the current value as the new delta and continues accumulation.
+    - **Source of Truth**: `SharedPreferences` serves as the local "source of truth" for cumulative daily steps, ensuring state is preserved across app kills and reboots.
+- **Background Sync**:
+    - Uses `Workmanager` to periodically sync the local accumulated total to Firestore.
+    - The background task handles cross-day transitions by resetting the local counter when a new day begins.
 
-### 5. Leaderboard Updates
+### 5. Historical Data (Time-Travel)
+- **Unified Repository**: `StepRepository` provides a transparent interface via `getStepsForDate(DateTime date)`.
+- **Live vs. Historical**: 
+    - For "Today", the app prioritizes live sensor data merged with the persistent local total.
+    - For past dates, the app fetches historical records from Firestore.
+- **Firestore Schema**: Daily steps are stored at `users/{userId}/daily_steps/{yyyy-MM-dd}` for efficient per-user querying and retrieval.
+
+### 6. CI/CD Pipeline
+- **Dual-Branch Strategy**: 
+    - `dev` branch: Triggers full APK builds and distribution via Firebase App Distribution for internal testing.
+    - Feature branches: Run lightweight static analysis, linting, and unit tests to ensure code quality before merging.
+
+### 7. Leaderboard Updates
 - **Strategy**: Scheduled Cloud Functions update leaderboards periodically
 - **Real-time**: Firestore listeners provide live updates to clients
 - **Optimization**: Cached rankings with TTL to reduce reads
@@ -314,4 +315,4 @@ erDiagram
 
 ---
 
-**Last Updated**: December 16, 2025
+**Last Updated**: March 4, 2026
