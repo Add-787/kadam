@@ -2,11 +2,11 @@ name: Flutter CI (Dev)
 
 on:
   push:
-    branches: [ "dev" ]
+    branches-ignore: [ "main" ]
     paths:
       - 'mobile-app/**'
   pull_request:
-    branches: [ "dev" ]
+    branches-ignore: [ "main" ]
     paths:
       - 'mobile-app/**'
   workflow_dispatch:
