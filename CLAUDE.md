@@ -6,6 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Kadam is a cross-platform step tracking mobile app built with Flutter/Dart. Users track daily steps, connect with friends, and compete on leaderboards. The Flutter app lives in `mobile-app/` — all Flutter commands must be run from there.
 
+## Branching
+
+Never commit features directly to `main`. Always create a `feature-<name>` branch and open a PR to `main` when done.
+
+```bash
+git checkout -b feature-<name>
+# open PR → main when done
+```
+
 ## Commands
 
 All commands run from `mobile-app/`:
