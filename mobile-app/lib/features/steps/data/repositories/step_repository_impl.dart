@@ -52,7 +52,20 @@ class StepRepositoryImpl implements StepRepository {
       await _prefs.remove(_keyLastSensorSteps);
     }
     
+    // Fetch today's total from the health store to catch up on missed steps
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day);
+    final healthTotal = await _localDataSource.getStepsForInterval(midnight, now);
+    if (healthTotal != null && healthTotal > _dailyStepsAccumulated) {
+      _dailyStepsAccumulated = healthTotal;
+      await _prefs.setInt(_keyDailyStepsAccumulated, _dailyStepsAccumulated);
+      await _prefs.remove(_keyLastSensorSteps);
+    }
+
     _stepController.add(_dailyStepsAccumulated);
+
+    // Sync to Firestore on init so today's data is always up to date
+    _syncToFirestore(today, _dailyStepsAccumulated);
 
     final granted = await _localDataSource.requestPermission();
     if (granted) {
@@ -90,6 +103,15 @@ class StepRepositoryImpl implements StepRepository {
       return _dailyStepsAccumulated;
     }
 
+    // Primary: Health Connect
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+    final healthSteps = await _localDataSource.getStepsForInterval(startOfDay, endOfDay);
+    if (healthSteps != null && healthSteps > 0) {
+      return healthSteps;
+    }
+
+    // Backup: Firestore
     final user = _authRepository.currentUser;
     if (user == null) return 0;
 
@@ -108,6 +130,22 @@ class StepRepositoryImpl implements StepRepository {
       print('Error fetching steps for $requestedDate: $e');
     }
     return 0;
+  }
+
+  void _syncToFirestore(String dateStr, int steps) {
+    final user = _authRepository.currentUser;
+    if (user == null) return;
+
+    _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('daily_steps')
+        .doc(dateStr)
+        .set({
+          'steps': steps,
+          'last_updated': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true))
+        .catchError((e) => print('Firestore sync error: $e'));
   }
 
   void _startListening() {
@@ -161,6 +199,42 @@ class StepRepositoryImpl implements StepRepository {
     _stepController.add(_dailyStepsAccumulated);
   }
   
+  @override
+  Future<Set<String>> getDatesWithData(DateTime start, DateTime end) async {
+    final dates = <String>{};
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+    // Today always has data if we have accumulated steps
+    if (_dailyStepsAccumulated > 0) {
+      dates.add(today);
+    }
+
+    final user = _authRepository.currentUser;
+    if (user == null) return dates;
+
+    try {
+      final startStr = DateFormat('yyyy-MM-dd').format(start);
+      final endStr = DateFormat('yyyy-MM-dd').format(end);
+
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('daily_steps')
+          .where(FieldPath.documentId, isGreaterThanOrEqualTo: startStr)
+          .where(FieldPath.documentId, isLessThanOrEqualTo: endStr)
+          .where('steps', isGreaterThan: 0)
+          .get();
+
+      for (final doc in snapshot.docs) {
+        dates.add(doc.id);
+      }
+    } catch (e) {
+      print('Error fetching dates with data: $e');
+    }
+
+    return dates;
+  }
+
   void dispose() {
     _stepSubscription?.cancel();
     _stepController.close();

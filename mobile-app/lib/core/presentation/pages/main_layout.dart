@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../theme/app_colors.dart';
 
-class MainLayout extends StatelessWidget {
+class MainLayout extends StatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const MainLayout({
@@ -12,22 +12,27 @@ class MainLayout extends StatelessWidget {
   });
 
   @override
+  State<MainLayout> createState() => _MainLayoutState();
+}
+
+class _MainLayoutState extends State<MainLayout> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: Stack(
         children: [
-          navigationShell,
+          widget.navigationShell,
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
             child: CustomBottomNavBar(
-              currentIndex: navigationShell.currentIndex,
+              currentIndex: widget.navigationShell.currentIndex,
               onTap: (index) {
-                navigationShell.goBranch(
+                widget.navigationShell.goBranch(
                   index,
-                  initialLocation: index == navigationShell.currentIndex,
+                  initialLocation: index == widget.navigationShell.currentIndex,
                 );
               },
             ),

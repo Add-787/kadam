@@ -42,12 +42,14 @@ class StepsState extends Equatable {
   final int dailyGoal;
   final DateTime selectedDate;
   final DateTime? joinedDate;
+  final Set<String> datesWithData;
 
   const StepsState({
     this.steps = 0,
     this.dailyGoal = 10000,
     required this.selectedDate,
     this.joinedDate,
+    this.datesWithData = const {},
   });
 
   StepsState copyWith({
@@ -55,17 +57,19 @@ class StepsState extends Equatable {
     int? dailyGoal,
     DateTime? selectedDate,
     DateTime? joinedDate,
+    Set<String>? datesWithData,
   }) {
     return StepsState(
       steps: steps ?? this.steps,
       dailyGoal: dailyGoal ?? this.dailyGoal,
       selectedDate: selectedDate ?? this.selectedDate,
       joinedDate: joinedDate ?? this.joinedDate,
+      datesWithData: datesWithData ?? this.datesWithData,
     );
   }
 
   @override
-  List<Object?> get props => [steps, dailyGoal, selectedDate, joinedDate];
+  List<Object?> get props => [steps, dailyGoal, selectedDate, joinedDate, datesWithData];
 }
 
 // Bloc
@@ -102,6 +106,13 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
     });
 
     await _stepRepository.init();
+
+    // Load which dates have step data for the date selector
+    final now = DateTime.now();
+    final rangeStart = now.subtract(const Duration(days: 14));
+    final rangeEnd = now;
+    final datesWithData = await _stepRepository.getDatesWithData(rangeStart, rangeEnd);
+    emit(state.copyWith(datesWithData: datesWithData));
   }
 
   Future<void> _onGoalChanged(GoalChanged event, Emitter<StepsState> emit) async {

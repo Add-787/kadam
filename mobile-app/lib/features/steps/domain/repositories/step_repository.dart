@@ -16,4 +16,7 @@ abstract class StepRepository {
 
   /// Gets the step count for a specific date.
   Future<int> getStepsForDate(DateTime date);
+
+  /// Returns a set of date strings (yyyy-MM-dd) that have step data within the given range.
+  Future<Set<String>> getDatesWithData(DateTime start, DateTime end);
 }

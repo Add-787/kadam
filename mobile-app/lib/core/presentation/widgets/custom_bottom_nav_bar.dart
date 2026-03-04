@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
+class CustomBottomNavBar extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
 
@@ -10,6 +10,48 @@ class CustomBottomNavBar extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
   });
+
+  @override
+  State<CustomBottomNavBar> createState() => _CustomBottomNavBarState();
+}
+
+class _CustomBottomNavBarState extends State<CustomBottomNavBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late int _previousIndex;
+
+  static const _icons = [
+    Icons.home_filled,
+    Icons.group_outlined,
+    Icons.leaderboard_outlined,
+    Icons.settings_outlined,
+  ];
+  static const _labels = ['Home', 'Friends', 'Leaderboards', 'Settings'];
+
+  @override
+  void initState() {
+    super.initState();
+    _previousIndex = widget.currentIndex;
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 350),
+    )..value = 1.0;
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomBottomNavBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentIndex != widget.currentIndex) {
+      _previousIndex = oldWidget.currentIndex;
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,40 +71,82 @@ class CustomBottomNavBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(0, Icons.home_filled, 'Home'),
-          _buildNavItem(1, Icons.group_outlined, 'Friends'),
-          _buildNavItem(2, Icons.leaderboard_outlined, 'Leaderboards'),
-          _buildNavItem(3, Icons.settings_outlined, 'Settings'),
-        ],
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          final t = Curves.easeInOut.transform(_controller.value);
+          return Row(
+            children: List.generate(4, (index) {
+              double flex;
+              if (index == widget.currentIndex) {
+                flex = 1.0 + 1.5 * t; // grows from 1.0 to 2.5
+              } else if (index == _previousIndex) {
+                flex = 2.5 - 1.5 * t; // shrinks from 2.5 to 1.0
+              } else {
+                flex = 1.0;
+              }
+              return Expanded(
+                flex: (flex * 100).round(),
+                child: _buildNavItem(index, _icons[index], _labels[index], t),
+              );
+            }),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    final isSelected = currentIndex == index;
+  Widget _buildNavItem(int index, IconData icon, String label, double t) {
+    final isSelected = widget.currentIndex == index;
+    final wasSelected = _previousIndex == index;
+
+    // Compute animated opacity for the label
+    double labelOpacity;
+    if (isSelected) {
+      labelOpacity = t;
+    } else if (wasSelected) {
+      labelOpacity = 1.0 - t;
+    } else {
+      labelOpacity = 0.0;
+    }
+
+    // Compute animated colors
+    final bgColor = isSelected
+        ? Color.lerp(Colors.black.withOpacity(0.3), AppColors.primary, t)!
+        : wasSelected
+            ? Color.lerp(AppColors.primary, Colors.black.withOpacity(0.3), t)!
+            : Colors.black.withOpacity(0.3);
+
+    final iconColor = isSelected
+        ? Color.lerp(Colors.white.withOpacity(0.8), Colors.black, t)!
+        : wasSelected
+            ? Color.lerp(Colors.black, Colors.white.withOpacity(0.8), t)!
+            : Colors.white.withOpacity(0.8);
+
+    final iconSize = isSelected
+        ? 22.0 + 2.0 * t
+        : wasSelected
+            ? 24.0 - 2.0 * t
+            : 22.0;
 
     return GestureDetector(
-      onTap: () => onTap(index),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+      onTap: () => widget.onTap(index),
+      behavior: HitTestBehavior.opaque,
+      child: Container(
         height: 48,
-        padding: EdgeInsets.symmetric(horizontal: isSelected ? 20 : 0),
-        width: isSelected ? null : 48,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.black.withOpacity(0.3),
+          color: bgColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.white.withOpacity(0.1),
+            color: (isSelected && t > 0.5) || (wasSelected && t < 0.5)
+                ? Colors.transparent
+                : Colors.white.withOpacity(0.1),
             width: 1.5,
           ),
-          boxShadow: isSelected
+          boxShadow: isSelected && t > 0.3
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
+                    color: AppColors.primary.withOpacity(0.4 * t),
                     blurRadius: 16,
                     spreadRadius: 2,
                   ),
@@ -70,36 +154,29 @@ class CustomBottomNavBar extends StatelessWidget {
               : [],
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.black : Colors.white.withOpacity(0.8),
-              size: isSelected ? 24 : 22,
-            ),
-            ClipRect(
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: isSelected
-                    ? Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(width: 8),
-                          Text(
-                            label,
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      )
-                    : const SizedBox.shrink(),
+            Icon(icon, color: iconColor, size: iconSize),
+            if (labelOpacity > 0)
+              Flexible(
+                child: Opacity(
+                  opacity: labelOpacity,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                ),
               ),
-            ),
           ],
         ),
       ),

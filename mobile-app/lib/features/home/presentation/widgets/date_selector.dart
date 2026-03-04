@@ -84,17 +84,34 @@ class _DateSelectorState extends State<DateSelector> {
             itemBuilder: (context, index) {
               final date = _dates[index];
               final isSelected = _isSameDay(date, state.selectedDate);
-              
-              // Restriction logic
-              final isValid = (date.isAfter(joinedDate) || _isSameDay(date, joinedDate)) && 
-                              (date.isBefore(today) || _isSameDay(date, today));
+              final dateStr = DateFormat('yyyy-MM-dd').format(date);
+              final isToday = _isSameDay(date, today);
+
+              // Date is in valid range (after joined, not in future)
+              final isInRange = (date.isAfter(joinedDate) || _isSameDay(date, joinedDate)) &&
+                                (date.isBefore(today) || isToday);
+
+              // Has step data (today always counts, past dates need Firestore data)
+              final hasData = isToday || state.datesWithData.contains(dateStr);
+
+              final isEnabled = isInRange && hasData;
+              final isDisabled = isInRange && !hasData; // valid range but no data
+
+              double opacity;
+              if (!isInRange) {
+                opacity = 0.25; // future or pre-join dates
+              } else if (isDisabled) {
+                opacity = 0.4; // in range but no step data
+              } else {
+                opacity = 1.0;
+              }
 
               return GestureDetector(
-                onTap: isValid ? () {
+                onTap: isEnabled ? () {
                   context.read<StepsBloc>().add(DateSelected(date));
                 } : null,
                 child: Opacity(
-                  opacity: isValid ? 1.0 : 0.5,
+                  opacity: opacity,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     width: 64,
@@ -102,7 +119,11 @@ class _DateSelectorState extends State<DateSelector> {
                       color: isSelected ? AppColors.primary : Colors.transparent,
                       borderRadius: BorderRadius.circular(32),
                       border: Border.all(
-                        color: isSelected ? AppColors.primary : AppColors.surface,
+                        color: isSelected
+                            ? AppColors.primary
+                            : isDisabled
+                                ? AppColors.surface.withOpacity(0.5)
+                                : AppColors.surface,
                         width: 1.5,
                       ),
                     ),
