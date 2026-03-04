@@ -10,4 +10,7 @@ abstract class StepRepository {
 
   /// Sets the daily step goal and persists it.
   Future<void> setDailyGoal(int goal);
+
+  /// Gets the step count for a specific date.
+  Future<int> getStepsForDate(DateTime date);
 }

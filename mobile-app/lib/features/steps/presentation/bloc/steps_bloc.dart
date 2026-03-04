@@ -101,18 +101,18 @@ class StepsBloc extends Bloc<StepsEvent, StepsState> {
     await _stepRepository.setDailyGoal(event.dailyGoal);
   }
 
-  void _onDateSelected(DateSelected event, Emitter<StepsState> emit) {
-    emit(state.copyWith(selectedDate: event.date));
-    // For now, we just update the state.
-    // In a real app, this would trigger fetching data for the selected date.
+  Future<void> _onDateSelected(DateSelected event, Emitter<StepsState> emit) async {
+    final steps = await _stepRepository.getStepsForDate(event.date);
+    emit(state.copyWith(selectedDate: event.date, steps: steps));
   }
 
   void _onStepsUpdated(_StepsUpdated event, Emitter<StepsState> emit) {
-    // Only update steps if the selected date is today.
-    final today = DateTime.now();
-    if (state.selectedDate.year == today.year &&
-        state.selectedDate.month == today.month &&
-        state.selectedDate.day == today.day) {
+    final now = DateTime.now();
+    final isTodaySelected = state.selectedDate.year == now.year &&
+        state.selectedDate.month == now.month &&
+        state.selectedDate.day == now.day;
+
+    if (isTodaySelected) {
       emit(state.copyWith(steps: event.steps));
     }
   }

@@ -17,12 +17,13 @@ class StepRepositoryImpl implements StepRepository {
   
   StreamSubscription<StepCount>? _stepSubscription;
 
-  static const String _keyStartOfDaySteps = 'sensor_value_at_start_of_day';
-  static const String _keyLastKnownDate = 'last_known_date';
+  static const String _keyLastSensorSteps = 'last_sensor_steps';
+  static const String _keyDailyStepsAccumulated = 'daily_steps_accumulated';
+  static const String _keyLastStepUpdateDate = 'last_step_update_date';
   static const String _keyDailyStepGoal = 'daily_step_goal';
 
-  int _startOfDaySteps = 0;
-  String? _lastKnownDate;
+  int _dailyStepsAccumulated = 0;
+  String? _lastStepUpdateDate;
   late SharedPreferences _prefs;
 
   StepRepositoryImpl(this._localDataSource, this._authRepository);
@@ -33,8 +34,19 @@ class StepRepositoryImpl implements StepRepository {
   @override
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
-    _startOfDaySteps = _prefs.getInt(_keyStartOfDaySteps) ?? -1;
-    _lastKnownDate = _prefs.getString(_keyLastKnownDate);
+    _dailyStepsAccumulated = _prefs.getInt(_keyDailyStepsAccumulated) ?? 0;
+    _lastStepUpdateDate = _prefs.getString(_keyLastStepUpdateDate);
+
+    // If it's a new day, reset
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (_lastStepUpdateDate != today) {
+      _dailyStepsAccumulated = 0;
+      await _prefs.setInt(_keyDailyStepsAccumulated, 0);
+      await _prefs.setString(_keyLastStepUpdateDate, today);
+      await _prefs.remove(_keyLastSensorSteps);
+    }
+    
+    _stepController.add(_dailyStepsAccumulated);
 
     final granted = await _localDataSource.requestPermission();
     if (granted) {
@@ -63,6 +75,35 @@ class StepRepositoryImpl implements StepRepository {
     }
   }
 
+  @override
+  Future<int> getStepsForDate(DateTime date) async {
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final requestedDate = DateFormat('yyyy-MM-dd').format(date);
+
+    if (requestedDate == today) {
+      return _dailyStepsAccumulated;
+    }
+
+    final user = _authRepository.currentUser;
+    if (user == null) return 0;
+
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('daily_steps')
+          .doc(requestedDate)
+          .get();
+
+      if (doc.exists) {
+        return doc.data()?['steps'] as int? ?? 0;
+      }
+    } catch (e) {
+      print('Error fetching steps for $requestedDate: $e');
+    }
+    return 0;
+  }
+
   void _startListening() {
     _stepSubscription = _localDataSource.stepCountStream.listen(
       (stepCount) {
@@ -76,25 +117,33 @@ class StepRepositoryImpl implements StepRepository {
 
   void _handleStepUpdate(int currentSensorSteps) async {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
-    if (_lastKnownDate != today) {
-      // It's a new day or first time initialization
-      _startOfDaySteps = currentSensorSteps;
-      _lastKnownDate = today;
+    
+    // Check for day change
+    if (_lastStepUpdateDate != today) {
+      _dailyStepsAccumulated = 0;
+      _lastStepUpdateDate = today;
+      await _prefs.setString(_keyLastStepUpdateDate, today);
+      await _prefs.setInt(_keyDailyStepsAccumulated, 0);
       
-      await _prefs.setInt(_keyStartOfDaySteps, _startOfDaySteps);
-      await _prefs.setString(_keyLastKnownDate, _lastKnownDate!);
+      // Reset last sensor steps to current to start fresh for the new day
+      await _prefs.setInt(_keyLastSensorSteps, currentSensorSteps);
     }
 
-    // If the sensor value is less than _startOfDaySteps (e.g. phone rebooted on Android),
-    // we should reset _startOfDaySteps to avoid negative steps.
-    if (currentSensorSteps < _startOfDaySteps) {
-      _startOfDaySteps = currentSensorSteps;
-      await _prefs.setInt(_keyStartOfDaySteps, _startOfDaySteps);
+    int? lastSensorStepsStored = _prefs.getInt(_keyLastSensorSteps);
+    int lastSensorSteps = lastSensorStepsStored ?? currentSensorSteps;
+    int delta = currentSensorSteps - lastSensorSteps;
+
+    if (delta < 0) {
+      // Reboot occurred, sensor reset
+      delta = currentSensorSteps;
     }
 
-    final dailySteps = currentSensorSteps - _startOfDaySteps;
-    _stepController.add(dailySteps);
+    _dailyStepsAccumulated += delta;
+    
+    await _prefs.setInt(_keyDailyStepsAccumulated, _dailyStepsAccumulated);
+    await _prefs.setInt(_keyLastSensorSteps, currentSensorSteps);
+    
+    _stepController.add(_dailyStepsAccumulated);
   }
   
   void dispose() {

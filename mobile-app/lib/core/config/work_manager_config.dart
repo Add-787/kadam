@@ -23,21 +23,24 @@ void callbackDispatcher() {
         return Future.value(true);
       }
 
-      // Get the last known total steps (saved when the app was in foreground)
-      // or try to get current total steps if possible.
-      // Since background sensor access is tricky, we rely on the last stored total.
-      final int currentTotalSteps = prefs.getInt('total_steps') ?? 0;
-      final int startOfDaySteps = prefs.getInt('steps_at_start_of_day') ?? 0;
+      final String todayString = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final String? lastUpdateDate = prefs.getString('last_step_update_date');
+      
+      int dailySteps = prefs.getInt('daily_steps_accumulated') ?? 0;
 
-      final int dailySteps = currentTotalSteps - startOfDaySteps;
+      if (lastUpdateDate != todayString) {
+        // Day change detected in background, reset accumulated steps
+        dailySteps = 0;
+        await prefs.setInt('daily_steps_accumulated', 0);
+        await prefs.setString('last_step_update_date', todayString);
+        
+        // IMPORTANT: We also need to clear last_sensor_steps so that 
+        // the next time the app opens, it doesn't calculate a massive delta 
+        // from the previous day's sensor reading.
+        await prefs.remove('last_sensor_steps');
+      }
 
-      print(
-        'Background Sync: $dailySteps steps calculated from total: $currentTotalSteps and start: $startOfDaySteps',
-      );
-
-      final String todayString = DateFormat(
-        'yyyy-MM-dd',
-      ).format(DateTime.now());
+      print('Background Sync: $dailySteps steps calculated for date: $todayString');
 
       await FirebaseFirestore.instance
           .collection('users')
